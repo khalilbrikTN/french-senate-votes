@@ -4,7 +4,8 @@ A website for exploring public votes (*scrutins publics*) in the French Senate: 
 voted, how each senator voted, and how the political groups are composed.
 
 All data comes from the Senate's open data (data.senat.fr) and is stored in a PostgreSQL
-database (Supabase). A small read-only API serves it to a plain HTML/JavaScript frontend.
+database (Supabase). A small read-only API serves the React frontend; the previous
+HTML/JavaScript frontend remains available at `/legacy` during the migration.
 
 ## Features
 
@@ -20,13 +21,14 @@ database (Supabase). A small read-only API serves it to a plain HTML/JavaScript 
 ## How it works
 
 ```
-data.senat.fr ──► backend/importers ──► Supabase PostgreSQL ──► backend/app (read-only API) ──► index.html + app.js
+data.senat.fr ──► backend/importers ──► Supabase PostgreSQL ──► backend/app (read-only API) ──► frontend/dist (React)
 ```
 
 | Part | What it does |
 |---|---|
-| `index.html`, `app.js`, `style.css` | Frontend (no framework). Served by the API at `/`. |
-| `backend/app/` | FastAPI API. Read-only database sessions, gzip, in-memory cache refreshed after each import. Docs at `/docs`. |
+| `frontend/src/` | React + TypeScript frontend. Build output is served by FastAPI at `/`. |
+| `index.html`, `app.js`, `style.css` | Preserved legacy frontend. Served by FastAPI at `/legacy`. |
+| `backend/app/` | FastAPI API and frontend server. Read-only database sessions, gzip, in-memory cache refreshed after each import. Docs at `/docs`. |
 | `backend/importers/` | Downloads the Senate's files and loads them into the database. Dry run by default. |
 | `backend/migrate.py` | Applies and tracks schema migrations (Supabase CLI–compatible history table). |
 | `supabase/migrations/` | Database schema, one SQL file per change. |
@@ -35,14 +37,16 @@ Details for each part are in [backend/README.md](backend/README.md).
 
 ## Getting started
 
-Requirements: Python 3 (developed and tested with 3.13) and a PostgreSQL database
-(a free Supabase project works; use its *Session pooler* connection string).
+Requirements: Python 3 (developed and tested with 3.13), Node.js/npm, and a PostgreSQL
+database (a free Supabase project works; use its *Session pooler* connection string).
 
 1. **Configure the database connection.** Copy `backend/.env.example` to
    `backend/.env.local` and set `DATABASE_URL`. This file is ignored by git; never commit it.
 2. **Install dependencies.**
    ```powershell
    python -m pip install -r backend/requirements.txt
+   npm ci --prefix frontend
+   npm run build --prefix frontend
    ```
 3. **Create the schema** (from `backend/`):
    ```powershell
@@ -55,14 +59,23 @@ Requirements: Python 3 (developed and tested with 3.13) and a PostgreSQL databas
    python -m importers all            # dry run: shows what would change
    python -m importers all --commit
    ```
-5. **Run the site**, then open http://localhost:8000/ :
+5. **Run the site**, then open http://localhost:8000/ (React) or
+   http://localhost:8000/legacy (the preserved frontend):
    ```powershell
    python run.py
    ```
 
-On Windows, `start_backend.bat`, `refresh_data.bat` and `migrate.bat` at the project root
-wrap steps 2–5 (they install the requirements first). Re-run `refresh_data.bat --commit`
-whenever you want the latest votes from the Senate.
+On Windows, `start_backend.bat` installs backend dependencies, builds the React frontend,
+and starts FastAPI. Re-run `refresh_data.bat --commit` whenever you want the latest votes
+from the Senate.
+
+For live frontend development, start FastAPI as above, then in another terminal run
+`cd frontend; npm run dev -- --host 0.0.0.0 --port 5002` and open the Vite URL. Vite
+proxies `/api` requests to FastAPI on port 8000. The production frontend is served by the
+same FastAPI origin as its API.
+
+Run the React regression suite from the project root with `npm test --prefix frontend`.
+`npm run build --prefix frontend` also runs the TypeScript check before producing the build.
 
 ## Data and its limits
 
@@ -81,6 +94,5 @@ whenever you want the latest votes from the Senate.
 
 ## Project status
 
-A personal project, run locally. The frontend currently calls the API at
-`http://localhost:8000` (`CONFIG.API_BASE` in `app.js`); hosting it elsewhere requires
-changing that setting.
+A personal project, run locally. The React frontend uses same-origin `/api` requests.
+The legacy frontend remains available at `/legacy` and retains its existing API behavior.

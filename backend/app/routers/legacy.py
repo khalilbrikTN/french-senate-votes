@@ -6,11 +6,13 @@ voters are fetched separately when a detail panel opens. New clients should use 
 """
 
 from collections import defaultdict
+import json
 from datetime import datetime, timezone
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request
 
+from .. import themes
 from ..cache import cached_json_response
 from ..db import database_is_reachable, get_connection
 from ..sql import CURRENT_LEADER_JOIN
@@ -186,13 +188,21 @@ def build_scrutins(connection):
         })
 
     # Voters are not embedded here; /api/scrutins/{session}/{number} returns them.
-    return [{
-        "number": v["number"], "session": v["session"], "date": iso(v["vote_date"]),
-        "title": v["title"], "result": v["result"], "url": v["source_url"],
-        "pour": v["votes_for"], "contre": v["votes_against"], "abstention": v["abstentions"],
-        "total": v["total"], "groups": groups.get((v["session"], v["number"]), []),
-        "senateurs": {p: [] for p in POSITIONS},
-    } for v in votes]
+    # theme / voteType: automatic, approximate classification of the title (app/themes.py).
+    result = []
+    for v in votes:
+        theme = themes.classify_theme(v["title"])
+        vote_type = themes.classify_vote_type(v["title"])
+        result.append({
+            "number": v["number"], "session": v["session"], "date": iso(v["vote_date"]),
+            "title": v["title"], "result": v["result"], "url": v["source_url"],
+            "pour": v["votes_for"], "contre": v["votes_against"], "abstention": v["abstentions"],
+            "total": v["total"], "groups": groups.get((v["session"], v["number"]), []),
+            "senateurs": {p: [] for p in POSITIONS},
+            "theme": theme, "themeLabel": themes.THEME_LABELS[theme],
+            "voteType": vote_type, "voteTypeLabel": themes.VOTE_TYPE_LABELS[vote_type],
+        })
+    return result
 
 
 @router.get("/scrutins/{session}/{number}")
@@ -274,4 +284,92 @@ def stats(connection=Depends(get_connection)):
         "groupColors": group_colors,
         "generatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "source": "Supabase (data.senat.fr, Licence Ouverte 2.0)",
+    }
+
+
+# Groups whose behaviour is aggregated from individual votes need at least this many
+# members expressing a position (pour/contre/abstention) on a vote for it to count:
+# with one or two listed senators a "group majority" or a cohesion score says nothing.
+MIN_GROUP_VOTERS = 3
+
+
+@router.get("/stats/groups")
+def stats_groups(request: Request):
+    # Aggregated from public.individual_votes; cached until the importers commit.
+    return cached_json_response(request, ("stats-groups",), build_group_stats)
+
+
+def build_group_stats(connection):
+    """Per-session coverage, group cohesion and pairwise group agreement.
+
+    individual_votes only holds the votes of the senators sitting at import time, so
+    older sessions are partial: `coverage` = individual pour/contre/abstention rows /
+    official number of voters (votes.total). Group codes are translated to app codes.
+    One statement: the per vote x group tallies are computed once (MATERIALIZED) and
+    reused by the cohesion and agreement aggregates.
+    """
+    row = connection.execute(
+        """WITH tallies AS MATERIALIZED (
+               SELECT iv.session, iv.vote_number,
+                      coalesce(%(aliases)s::jsonb ->> iv.group_code, iv.group_code, 'NI') AS grp,
+                      count(*) FILTER (WHERE iv.position = 'pour') AS y,
+                      count(*) FILTER (WHERE iv.position = 'contre') AS n,
+                      count(*) FILTER (WHERE iv.position = 'abstention') AS a
+               FROM public.individual_votes iv
+               WHERE iv.position <> 'non_votant'
+               GROUP BY 1, 2, 3
+           ),
+           counted AS MATERIALIZED (
+               SELECT session, vote_number, grp, y, n, a, y + n + a AS cast_, greatest(y, n, a) AS top,
+                      CASE WHEN y > n AND y > a THEN 'pour'
+                           WHEN n > y AND n > a THEN 'contre'
+                           WHEN a > y AND a > n THEN 'abstention' END AS majority
+               FROM tallies WHERE y + n + a >= %(min_voters)s
+           ),
+           coverage AS (
+               SELECT v.session, count(*) AS votes, sum(v.total) AS official_voters,
+                      coalesce(sum(t.cast_), 0) AS individual_cast,
+                      count(*) FILTER (WHERE t.cast_ > 0) AS votes_with_individual
+               FROM public.votes v
+               LEFT JOIN (SELECT session, vote_number, sum(y + n + a) AS cast_
+                          FROM tallies GROUP BY 1, 2) t
+                      ON t.session = v.session AND t.vote_number = v.number
+               GROUP BY v.session
+           ),
+           cohesion AS (
+               SELECT session, grp, count(*) AS votes, avg(cast_) AS avg_voters,
+                      avg((top - 0.5 * (cast_ - top)) / cast_) AS ai
+               FROM counted GROUP BY 1, 2
+           ),
+           agreement AS (
+               SELECT a.session, a.grp AS g1, b.grp AS g2, count(*) AS votes,
+                      count(*) FILTER (WHERE a.majority = b.majority) AS agree
+               FROM counted a
+               JOIN counted b ON b.session = a.session AND b.vote_number = a.vote_number AND a.grp < b.grp
+               WHERE a.majority IS NOT NULL AND b.majority IS NOT NULL
+               GROUP BY 1, 2, 3
+           )
+           SELECT
+             (SELECT json_agg(json_build_object(
+                  'session', session, 'votes', votes, 'officialVoters', official_voters,
+                  'individualCast', individual_cast, 'votesWithIndividual', votes_with_individual,
+                  'coverage', CASE WHEN official_voters > 0
+                                   THEN round(individual_cast::numeric / official_voters, 4) ELSE 0 END)
+                  ORDER BY session) FROM coverage) AS sessions,
+             (SELECT json_agg(json_build_object(
+                  'session', session, 'group', grp, 'votes', votes,
+                  'avgVoters', round(avg_voters, 1), 'agreementIndex', round(ai, 4))
+                  ORDER BY session, grp) FROM cohesion) AS cohesion,
+             (SELECT json_agg(json_build_object(
+                  'session', session, 'groupA', g1, 'groupB', g2, 'votes', votes, 'agree', agree)
+                  ORDER BY session, g1, g2) FROM agreement) AS agreement""",
+        {"aliases": json.dumps(APP_GROUP_CODES), "min_voters": MIN_GROUP_VOTERS},
+    ).fetchone()
+    return {
+        "scope": "sitting_senators",
+        "minGroupVoters": MIN_GROUP_VOTERS,
+        "sessions": row["sessions"] or [],
+        "cohesion": row["cohesion"] or [],
+        "agreement": row["agreement"] or [],
+        "generatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }

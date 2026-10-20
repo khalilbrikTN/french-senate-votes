@@ -1,0 +1,115 @@
+/*
+ * Sénat Votes React design tokens.
+ * The spacing scale follows a 4px rhythm; semantic colors give the React app
+ * its French republican navy, Bleu France, ivory, and Marianne-red identity.
+ */
+:root {
+  /* Contextual color roles */
+  --sv-color-surface-page: var(--color-bg);
+  --sv-color-surface-base: var(--color-bg-2);
+  --sv-color-surface-card: var(--color-bg-card);
+  --sv-color-surface-card-hover: var(--color-bg-card-hover);
+  --sv-color-text-primary: var(--color-text-primary);
+  --sv-color-text-secondary: var(--color-text-secondary);
+  --sv-color-text-muted: var(--color-text-muted);
+  --sv-color-border: var(--color-border);
+  --sv-color-border-subtle: var(--color-border-subtle);
+  /* DSFR Bleu France base; dark-scheme components use its paired variant below. */
+  --sv-color-brand-blue: #000091;
+  --sv-color-brand-blue-dark-scheme: #8585f6;
+  --sv-color-brand-blue-dark-hover: #b1b1f9;
+  --sv-color-brand-red: #e1000f;
+  --sv-color-brand-red-dark-scheme: #f95c5e;
+  --sv-color-brand-white: #ffffff;
+  --sv-color-tricolour-line: linear-gradient(90deg, var(--sv-color-brand-blue) 0 33.333%, var(--sv-color-brand-white) 33.333% 66.666%, var(--sv-color-brand-red) 66.666% 100%);
+  --sv-color-action-primary: var(--sv-color-brand-blue-dark-scheme);
+  --sv-color-action-primary-strong: var(--sv-color-brand-blue-dark-hover);
+  --sv-color-action-on-primary: #0b1422;
+  --sv-color-action-primary-soft: var(--color-blue-dim);
+  --sv-color-action-primary-border: rgba(177, 177, 249, 0.38);
+  --sv-shadow-action-primary: 0 4px 20px rgba(133, 133, 246, 0.28);
+  --sv-shadow-action-primary-hover: 0 8px 32px rgba(133, 133, 246, 0.42);
+  --sv-color-status-success: var(--color-green);
+  --sv-color-status-danger: var(--color-red);
+
+  /* Shared motion timings keep interaction feedback quiet and predictable. */
+  --sv-motion-fast: 140ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  --sv-motion-standard: 200ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  --sv-motion-slow: 360ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  --sv-motion-enter: 650ms;
+
+  /* Typography: a compact, reusable scale in rem (16px base). */
+  --sv-type-micro: 0.625rem; /* 10px */
+  --sv-type-caption: 0.75rem; /* 12px */
+  --sv-type-label: 0.8125rem; /* 13px */
+  --sv-type-body-sm: 0.875rem; /* 14px */
+  --sv-type-body: 1rem; /* 16px */
+  --sv-type-lead: 1.125rem; /* 18px */
+  --sv-type-heading-sm: 1.25rem; /* 20px */
+  --sv-type-heading-md: 1.75rem; /* 28px */
+  --sv-type-heading-lg: 2.5rem; /* 40px */
+  --sv-type-metric-sm: 1.375rem; /* 22px */
+  --sv-type-metric-lg: 2.25rem; /* 36px */
+  --sv-type-metric-hero: clamp(1.625rem, 3vw, 2.125rem);
+  --sv-type-dialog-title: clamp(1.125rem, 3vw, 1.5rem);
+  --sv-type-display: clamp(2.5rem, 6vw, 5rem);
+  --sv-type-display-hero: clamp(2.875rem, 5.4vw, 4.5rem);
+  --sv-leading-tight: 1.2;
+  --sv-leading-heading: 1.35;
+  --sv-leading-body: 1.6;
+  --sv-leading-relaxed: 1.75;
+
+  /* Spacing scale: 4px increments, expressed in rem. */
+  --sv-space-0: 0;
+  --sv-space-1: 0.25rem; /* 4px */
+  --sv-space-1-5: 0.375rem; /* 6px */
+  --sv-space-2: 0.5rem; /* 8px */
+  --sv-space-3: 0.75rem; /* 12px */
+  --sv-space-4: 1rem; /* 16px */
+  --sv-space-5: 1.25rem; /* 20px */
+  --sv-space-6: 1.5rem; /* 24px */
+  --sv-space-7: 1.75rem; /* 28px */
+  --sv-space-8: 2rem; /* 32px */
+  --sv-space-9: 2.25rem; /* 36px */
+  --sv-space-10: 2.5rem; /* 40px */
+  --sv-space-11: 2.75rem; /* 44px */
+  --sv-space-12: 3rem; /* 48px */
+  --sv-space-14: 3.5rem; /* 56px */
+  --sv-space-15: 3.75rem; /* 60px */
+  --sv-space-16: 4rem; /* 64px */
+  --sv-space-18: 4.5rem; /* 72px */
+  --sv-space-19: 4.75rem; /* 76px */
+  --sv-space-20: 5rem; /* 80px */
+  --sv-space-24: 6rem; /* 96px */
+  --sv-space-25: 6.25rem; /* 100px */
+
+  /* Reusable panel and card geometry */
+  --sv-card-padding-compact: var(--sv-space-4);
+  --sv-card-padding-default: var(--sv-space-6);
+  --sv-card-padding-large: var(--sv-space-8);
+  --sv-card-gap: var(--sv-space-4);
+  --sv-card-radius: var(--radius-lg);
+  --sv-card-radius-large: var(--radius-xl);
+  --sv-border-width: 1px;
+  --sv-border-width-strong: 2px;
+  --sv-border-card: var(--sv-border-width) solid var(--sv-color-border);
+  --sv-border-subtle: var(--sv-border-width) solid var(--sv-color-border-subtle);
+  --sv-border-control: var(--sv-border-width) solid var(--sv-color-border);
+  --sv-focus-ring: 0 0 0 var(--sv-space-1) rgba(133, 133, 246, 0.35);
+  --sv-outline-focus: var(--sv-border-width-strong) solid var(--sv-color-action-primary);
+  --sv-outline-offset: var(--sv-space-1);
+
+  /* Shared control sizes */
+  --sv-button-height-sm: var(--sv-space-9); /* 36px */
+  --sv-button-height-md: 3rem; /* 48px */
+  --sv-button-height-lg: 4rem; /* 64px */
+  --sv-control-height-sm: var(--sv-button-height-sm);
+  --sv-control-height-md: var(--sv-button-height-md);
+  --sv-control-height-lg: var(--sv-button-height-lg);
+  --sv-control-height-icon: 2.5rem; /* 40px */
+  --sv-control-height-input: 2.5rem; /* 40px */
+  --sv-button-padding-x: var(--sv-space-6);
+  --sv-button-padding-y: var(--sv-space-3);
+  --sv-button-font-size: var(--sv-type-body-sm);
+  --sv-button-radius: var(--radius-full);
+}
