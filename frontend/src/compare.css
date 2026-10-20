@@ -1,0 +1,180 @@
+/* Senator comparison ("Comparer avec un autre sénateur") in the senator dialog. */
+.cmp-section { margin-bottom: 28px; }
+
+.cmp-picker { position: relative; max-width: 460px; }
+.cmp-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--color-text-secondary);
+  font-size: var(--sv-type-caption, 12px);
+}
+.cmp-combobox { position: relative; }
+.cmp-combobox > svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  transform: translateY(-50%);
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+.cmp-input { padding-left: 36px; }
+.cmp-input:focus-visible { outline: var(--sv-outline-focus); outline-offset: var(--sv-outline-offset); }
+
+.cmp-options {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  max-height: 320px;
+  margin: 0;
+  padding: 6px;
+  overflow-y: auto;
+  list-style: none;
+  background: var(--color-bg-2, #0f1a2b);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+}
+.cmp-option {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  grid-template-areas: "avatar name" "avatar meta";
+  column-gap: 10px;
+  row-gap: 2px;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.cmp-option.is-active { background: var(--sv-color-action-primary-soft); outline: 1px solid var(--sv-color-action-primary-border); }
+.cmp-option-avatar {
+  grid-area: avatar;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+}
+.cmp-option-name {
+  grid-area: name;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--color-text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cmp-option-meta {
+  grid-area: meta;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+.cmp-option-group {
+  flex-shrink: 0;
+  padding: 1px 7px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
+  font-size: 10px;
+  font-weight: 700;
+}
+.cmp-option-dept { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cmp-option-empty { padding: 12px 10px; color: var(--color-text-muted); font-size: 13px; }
+.cmp-picker-status { margin: 8px 0 0; color: var(--color-text-muted); font-size: 12px; }
+
+.cmp-result {
+  margin-top: 16px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+}
+.cmp-pair {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  margin-bottom: 14px;
+}
+.cmp-pair-names {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  min-width: 0;
+  color: var(--color-text-primary);
+  font-size: 14px;
+}
+.cmp-pair-vs { color: var(--color-text-muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+.cmp-pair .cmp-clear { width: auto; flex: 0 0 auto; min-height: 32px; margin-left: auto; padding: 4px 12px; font-size: 13px; }
+
+.cmp-headline { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; margin-bottom: 12px; }
+.cmp-rate { display: flex; align-items: baseline; gap: 8px; }
+.cmp-rate-value {
+  color: var(--sv-color-action-primary-strong);
+  font-size: var(--sv-type-metric-lg, 36px);
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.cmp-rate-label { color: var(--color-text-secondary); font-size: 14px; }
+.cmp-rate-detail { flex: 1 1 220px; margin: 0; color: var(--color-text-secondary); font-size: 13px; line-height: 1.5; }
+.cmp-rate-detail strong { color: var(--color-text-primary); }
+.cmp-period { color: var(--color-text-muted); font-size: 12px; }
+
+.cmp-bar {
+  display: flex;
+  height: 10px;
+  margin-bottom: 10px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-full);
+}
+.cmp-bar-seg { display: block; height: 100%; min-width: 2px; }
+.cmp-bar-seg.bothPour, .cmp-swatch.bothPour { background: var(--color-green); }
+.cmp-bar-seg.bothContre, .cmp-swatch.bothContre { background: var(--color-red); }
+.cmp-bar-seg.bothAbstention, .cmp-swatch.bothAbstention { background: var(--color-gold); }
+.cmp-bar-seg.opposite, .cmp-swatch.opposite { background: var(--color-blue-light); }
+.cmp-bar-seg.oneAbstained, .cmp-swatch.oneAbstained { background: var(--color-text-muted); }
+
+.cmp-breakdown {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 6px 16px;
+  margin: 0 0 20px;
+  padding: 0;
+  list-style: none;
+}
+.cmp-breakdown-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.cmp-swatch { width: 10px; height: 10px; flex-shrink: 0; border-radius: 3px; }
+.cmp-breakdown-label { flex: 1; min-width: 0; color: var(--color-text-secondary); }
+.cmp-breakdown-value { color: var(--color-text-primary); font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.cmp-subtitle { font-size: 14px; flex-wrap: wrap; gap: 2px 12px; }
+.cmp-disagreements { max-height: 420px; }
+.cmp-positions { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 2px; }
+.cmp-position { display: inline-flex; align-items: center; gap: 6px; min-width: 0; font-size: 12px; color: var(--color-text-secondary); }
+.cmp-position-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 160px; }
+.cmp-positions .history-vote-badge { padding: 2px 8px; font-size: 10px; }
+.cmp-more-note { margin: 8px 0 0; color: var(--color-text-muted); font-size: 12px; }
+.cmp-note { margin: 12px 0 0; color: var(--color-text-muted); font-size: 12px; line-height: 1.5; }
+.cmp-empty { line-height: 1.5; }
+
+@media (max-width: 600px) {
+  .cmp-picker { max-width: none; }
+  .cmp-result { padding: 12px; }
+  .cmp-rate-value { font-size: var(--sv-type-metric-sm, 22px); }
+  .cmp-breakdown { grid-template-columns: 1fr; }
+}

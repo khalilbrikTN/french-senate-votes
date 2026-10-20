@@ -6,13 +6,17 @@ import threading
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
+from fastapi.staticfiles import StaticFiles
 import psycopg
 from psycopg_pool import PoolTimeout
 
 from . import cache, db
 from .config import PROJECT_ROOT, load_settings
 from .routers import groups, legacy, meta, senators, votes
+from .routers import compare
+from .routers import loyalty
+from .routers import themes as theme_routes
 
 settings = load_settings()
 
@@ -22,6 +26,8 @@ def warm_cache():
     try:
         cache.cached_body(("senateurs", "ACTIF"), lambda c: legacy.build_senateurs(c, "ACTIF"))
         cache.cached_body(("scrutins",), legacy.build_scrutins)
+        cache.cached_body(("stats-groups",), legacy.build_group_stats)
+        cache.cached_body(("loyalty",), loyalty.build_loyalty)
     except Exception:
         pass  # the first request builds them instead
 
@@ -63,20 +69,46 @@ async def database_unavailable(request: Request, exc: Exception):
 for router in (meta.router, senators.router, groups.router, votes.router):
     app.include_router(router, prefix="/api/v1")
 app.include_router(legacy.router, prefix="/api")
+app.include_router(compare.router, prefix="/api")
+app.include_router(loyalty.router, prefix="/api")
+app.include_router(theme_routes.router, prefix="/api")
 
-# Serve only the frontend's own files, never the rest of the project folder.
-FRONTEND_FILES = {"index.html": "text/html", "app.js": "text/javascript", "style.css": "text/css"}
-# Revalidate on every load so the browser never runs a stale copy after an edit.
+# The React build is generated with `npm run build` in frontend/. Mount only its
+# Vite output directory; never expose the rest of the project folder.
+REACT_DIST = PROJECT_ROOT / "frontend" / "dist"
+REACT_INDEX = REACT_DIST / "index.html"
+REACT_ASSETS = REACT_DIST / "assets"
+LEGACY_INDEX = PROJECT_ROOT / "index.html"
+if REACT_ASSETS.is_dir():
+    app.mount("/assets", StaticFiles(directory=REACT_ASSETS), name="react-assets")
+
+# Keep legacy files available throughout the migration. Revalidate HTML and source
+# assets on each load so the browser does not keep an old copy after an edit.
+FRONTEND_FILES = {"app.js": "text/javascript", "style.css": "text/css"}
 NO_CACHE = {"Cache-Control": "no-cache"}
 
 
 @app.get("/", include_in_schema=False)
 def index():
-    return FileResponse(PROJECT_ROOT / "index.html", media_type="text/html", headers=NO_CACHE)
+    # A checkout without a built frontend continues to serve the working legacy UI.
+    page = REACT_INDEX if REACT_INDEX.is_file() else LEGACY_INDEX
+    return FileResponse(page, media_type="text/html", headers=NO_CACHE)
+
+
+@app.get("/legacy", include_in_schema=False)
+@app.get("/index.html", include_in_schema=False)
+def legacy_index():
+    return FileResponse(LEGACY_INDEX, media_type="text/html", headers=NO_CACHE)
 
 
 @app.get("/{filename}", include_in_schema=False)
 def frontend_file(filename: str):
     if filename not in FRONTEND_FILES:
         return JSONResponse(status_code=404, content={"detail": "Not found"})
+    if filename == "app.js":
+        # The preserved source targets localhost:8000. Serve it with a same-origin
+        # API base so /legacy also works when this server is reached by LAN hostname.
+        source = (PROJECT_ROOT / filename).read_text(encoding="utf-8")
+        source = source.replace("API_BASE: 'http://localhost:8000'", "API_BASE: ''", 1)
+        return Response(source, media_type=FRONTEND_FILES[filename], headers=NO_CACHE)
     return FileResponse(PROJECT_ROOT / filename, media_type=FRONTEND_FILES[filename], headers=NO_CACHE)

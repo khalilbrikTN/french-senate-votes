@@ -1,0 +1,294 @@
+/* Party loyalty: senator panel block and Groups page ranking (components/SenatorLoyalty.tsx,
+   components/LoyaltyRanking.tsx). Builds on the legacy.css palette (--color-*) and --sv-* tokens. */
+
+.loyalty-block { margin-bottom: 28px; }
+
+.loyalty-message {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin: 0;
+  padding: 12px 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+.loyalty-summary {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 14px 16px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+.loyalty-score {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  flex-shrink: 0;
+  min-width: 112px;
+}
+.loyalty-score-value {
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.loyalty-score-label {
+  margin-top: 4px;
+  max-width: 130px;
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.loyalty-summary-details { flex: 1; min-width: 0; }
+.loyalty-counts {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+}
+.loyalty-counts strong { color: var(--color-text-primary); font-variant-numeric: tabular-nums; }
+.loyalty-caveat {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--color-gold-light);
+}
+
+/* Tones: >= 97 % high, >= 90 % medium, below: notably independent */
+.tone-high { color: var(--color-green); }
+.tone-medium { color: var(--color-gold-light); }
+.tone-low { color: var(--color-red); }
+.tone-none { color: var(--color-text-muted); }
+
+.loyalty-bar {
+  display: block;
+  position: relative;
+  height: 8px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.06);
+  border-radius: var(--radius-full);
+}
+.loyalty-bar-sm { height: 5px; width: 100%; }
+.loyalty-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: currentColor;
+}
+
+.loyalty-rebels { margin-top: 12px; }
+.loyalty-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--sv-control-height-sm, 36px);
+  padding: 6px 12px 6px 8px;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  color: var(--sv-color-action-primary-strong, var(--color-blue-light));
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition);
+}
+.loyalty-toggle:hover { background: rgba(255,255,255,0.04); border-color: var(--sv-color-action-primary-border, var(--color-border)); }
+.loyalty-toggle svg { width: 16px; height: 16px; flex-shrink: 0; transition: transform var(--transition); }
+.loyalty-toggle[aria-expanded="true"] svg { transform: rotate(90deg); }
+.loyalty-list-hint { display: block; margin: 10px 0 8px; }
+.loyalty-rebel-list { max-height: 420px; }
+
+.loyalty-rebel-positions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  width: 92px;
+}
+.loyalty-rebel-vs { font-size: 10px; color: var(--color-text-muted); text-transform: uppercase; }
+.loyalty-group-position {
+  max-width: 100%;
+  padding: 2px 8px;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-full);
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--color-text-secondary);
+}
+.loyalty-group-position.pour { border-color: rgba(34,197,94,0.35); color: var(--color-green); }
+.loyalty-group-position.contre { border-color: rgba(249,92,94,0.35); color: var(--color-red); }
+.loyalty-group-position.abstention { border-color: rgba(201,168,76,0.35); color: var(--color-gold); }
+
+.loyalty-definition {
+  margin-top: 12px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--color-text-muted);
+}
+.loyalty-definition summary {
+  width: fit-content;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+.loyalty-definition p { margin: 8px 0 0; }
+
+/* Groups page ranking */
+.loyalty-ranking {
+  margin-bottom: var(--sv-space-12, 48px);
+  padding: var(--sv-card-padding-default, 24px);
+  background: var(--sv-color-surface-card, var(--color-bg-card));
+  border: var(--sv-border-card, 1px solid var(--color-border));
+  border-radius: var(--sv-card-radius-large, var(--radius-xl));
+}
+.loyalty-ranking-title {
+  margin: 4px 0 6px;
+  font-family: var(--font-display);
+  font-size: var(--sv-type-heading-lg, 26px);
+  line-height: var(--sv-leading-heading, 1.2);
+  color: var(--color-text-primary);
+}
+.loyalty-ranking-lead { margin: 0 0 18px; font-size: 14px; color: var(--color-text-secondary); }
+
+.loyalty-group-averages {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 8px;
+}
+.loyalty-group-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 8px 12px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  font: inherit;
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition);
+}
+.loyalty-group-chip:hover { background: rgba(255,255,255,0.05); }
+.loyalty-group-chip.is-active { background: rgba(255,255,255,0.07); }
+.loyalty-group-chip-code { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; }
+.loyalty-group-chip-value { font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.loyalty-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.loyalty-caption { margin: 8px 0 18px; font-size: 12px; color: var(--color-text-muted); }
+
+.loyalty-filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 280px));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.loyalty-results { margin: 0 0 10px; font-size: 13px; color: var(--color-text-secondary); }
+.loyalty-results strong { color: var(--color-text-primary); }
+
+.loyalty-ranking-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.loyalty-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+button.loyalty-row { cursor: pointer; transition: background var(--transition), border-color var(--transition); }
+button.loyalty-row:hover { background: rgba(255,255,255,0.05); border-color: var(--sv-color-action-primary-border, var(--color-border)); }
+.loyalty-rank {
+  width: 28px;
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.loyalty-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border: 2px solid;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.04);
+  font-size: 12px;
+  font-weight: 700;
+}
+.loyalty-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.loyalty-row-main { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; }
+.loyalty-row-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.loyalty-row-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+.loyalty-row-group {
+  padding: 1px 7px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 700;
+}
+.loyalty-row-score {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+  width: 120px;
+  flex-shrink: 0;
+}
+.loyalty-row-value { font-size: 16px; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+@media (max-width: 600px) {
+  .loyalty-summary { flex-direction: column; align-items: stretch; gap: 10px; }
+  .loyalty-score { flex-direction: row; align-items: baseline; gap: 10px; min-width: 0; }
+  .loyalty-score-label { max-width: none; }
+  .loyalty-rebel-positions { width: 76px; }
+  .loyalty-ranking { padding: 16px; }
+  .loyalty-ranking-title { font-size: 22px; }
+  .loyalty-filters { grid-template-columns: minmax(0, 1fr); }
+  .loyalty-row { gap: 10px; padding: 10px; }
+  .loyalty-rank { width: 20px; }
+  .loyalty-avatar { width: 32px; height: 32px; }
+  .loyalty-row-score { width: 72px; }
+  .loyalty-row-value { font-size: 14px; }
+}

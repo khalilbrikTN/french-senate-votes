@@ -13,11 +13,18 @@ loaded separately by the importers in
 
 ```powershell
 copy backend\.env.example backend\.env.local   # then set DATABASE_URL
+npm ci --prefix frontend
+npm run build --prefix frontend
 start_backend.bat                              # or: python backend\run.py
 ```
 
-- Site: http://localhost:8000/ (serves only `index.html`, `app.js`, `style.css`)
+- Site: http://localhost:8000/ (serves the built React app when `frontend/dist` exists)
+- Preserved legacy site: http://localhost:8000/legacy
 - Interactive API docs: http://localhost:8000/docs
+
+If the React build is absent, `/` continues to serve the legacy page. The server only
+serves Vite output from `frontend/dist/assets`; it does not expose other project files.
+The React app and API share an origin and use relative `/api` URLs.
 
 `DATABASE_URL` must stay in `backend/.env.local` or the environment; never put it
 in frontend code. Optional settings are listed in `.env.example`.
@@ -34,7 +41,7 @@ backend/
     main.py           app, CORS, error handling, routers, static frontend files
     config.py         settings from the environment, then backend/.env.local
     db.py             read-only psycopg connection pool
-    cache.py          in-process cache of /api/senateurs and /api/scrutins
+    cache.py          in-process cache of /api/senateurs, /api/scrutins, /api/stats/groups
     schemas.py        response models for /api/v1
     sql.py            shared SQL column lists and search escaping
     routers/
@@ -42,7 +49,7 @@ backend/
       senators.py     /api/v1/senators...
       groups.py       /api/v1/groups...
       votes.py        /api/v1/votes...
-      legacy.py       /api/status, /api/senateurs, /api/scrutins, /api/stats
+      legacy.py       /api/status, /api/senateurs, /api/scrutins, /api/stats, /api/stats/groups
 ```
 
 ## Endpoints
@@ -78,12 +85,31 @@ groups included (`RPR`, `UDR`, `ECO`...), to its colour; app.js uses it for the
 career timelines. When the backend is unreachable app.js falls back to the colours
 and presidents hardcoded in `POLITICAL_GROUPS` / `HISTORICAL_GROUP_COLORS`.
 
+`/api/stats/groups` → group behaviour for the Statistics page, aggregated in one SQL
+statement from `individual_votes` (app group codes, `UMP` → `LR`...). Individual votes
+exist only for the senators sitting at import time, so older sessions are partial:
+
+- `sessions[]`: `session`, `votes`, `officialVoters` (sum of `votes.total`),
+  `individualCast` (individual pour/contre/abstention rows), `votesWithIndividual`,
+  `coverage` = `individualCast / officialVoters` (2025: 0.80, 2022: 0.56, 2010: 0.04).
+- `cohesion[]`: per `session` × `group`, `agreementIndex` = mean over votes of the
+  Hix–Noury–Roland index `(max(P,C,A) − ½·(P+C+A − max)) / (P+C+A)`, with `votes` and
+  `avgVoters`.
+- `agreement[]`: per `session` × pair (`groupA` < `groupB`), `votes` where both groups had
+  a strict majority position (pour, contre or abstention; ties excluded) and `agree` where it
+  was the same.
+- A group counts on a vote only when at least `minGroupVoters` (3) of its members expressed
+  a position. Non-votants are ignored. `scope` is `sitting_senators`.
+
+The frontend hides group figures for sessions under 50 % coverage and flags those under
+70 % as partial. Built in about 1 s, ~35 KB (4 KB gzipped).
+
 ### Compression and caching
 
 - **Compression**: responses of 1 KB or more are gzipped (`GZipMiddleware`, level 6)
   for clients that send `Accept-Encoding: gzip`. `/api/scrutins` goes from 2.6 MB
   to 240 KB on the wire, `/api/senateurs` from 250 KB to 35 KB.
-- **Cache**: `/api/senateurs` (per `status`) and `/api/scrutins` are built once and
+- **Cache**: `/api/senateurs` (per `status`), `/api/scrutins` and `/api/stats/groups` are built once and
   kept in memory as JSON plus a gzip copy (`app/cache.py`); a hit takes a few
   milliseconds instead of 0.4–0.9 s. They are built in the background at startup.
   The `X-Cache: hit|miss` header shows which happened.

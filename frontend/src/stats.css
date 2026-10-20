@@ -1,0 +1,342 @@
+/* Statistics charts (ECharts). Loaded with the lazily imported Statistics view.
+   Reuses the original card classes (stats-chart-card, stats-chart-title) and the
+   --sv-* / --color-* tokens so the charts sit in the existing visual language. */
+
+.stats-viz-card {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.stats-viz-card--wide { width: 100%; }
+
+.stats-viz-card .stats-chart-title {
+  gap: var(--sv-space-1, 4px) var(--sv-space-3, 12px);
+  flex-wrap: wrap;
+  margin-bottom: var(--sv-space-3, 12px);
+}
+
+.stats-viz-heading {
+  margin: 0;
+  font: inherit;
+  color: inherit;
+}
+
+.stats-viz-aside {
+  font-size: var(--sv-type-caption, 12px);
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+.stats-viz-caption {
+  margin: var(--sv-space-3, 12px) 0 0;
+  font-size: var(--sv-type-caption, 12px);
+  font-weight: 700;
+  line-height: var(--sv-leading-body, 1.6);
+  color: var(--color-text-muted);
+}
+
+.stats-viz-kpi {
+  margin: 0 0 var(--sv-space-2, 8px);
+  font-size: var(--sv-type-label, 13px);
+  color: var(--color-text-secondary);
+}
+
+.stats-viz-kpi strong {
+  font-size: var(--sv-type-metric-sm, 22px);
+  font-weight: 800;
+  color: var(--color-text-primary);
+  margin-right: var(--sv-space-1, 4px);
+}
+
+.stats-viz-kpi span { color: var(--color-text-muted); }
+
+.echart {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  /* A stale render (before a resize) must never widen the page. */
+  overflow: hidden;
+}
+
+.stats-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+
+@media (max-width: 600px) {
+  .stats-stack { gap: 12px; }
+}
+
+.echart-fallback {
+  padding: var(--sv-space-4, 16px);
+  font-size: var(--sv-type-label, 13px);
+  color: var(--color-text-muted);
+}
+
+/* Legends: rectangles for bars, dots for seats; text in text tokens, never in the series colour. */
+.stats-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sv-space-1, 4px) var(--sv-space-4, 16px);
+  margin: 0 0 var(--sv-space-2, 8px);
+  padding: 0;
+  list-style: none;
+}
+
+.stats-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sv-space-1-5, 6px);
+  font-size: var(--sv-type-caption, 12px);
+  color: var(--color-text-secondary);
+}
+
+.stats-legend-value {
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.stats-legend-key {
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.stats-legend-key--rect { width: 10px; height: 10px; border-radius: 3px; }
+.stats-legend-key--line { width: 14px; height: 3px; border-radius: 2px; }
+.stats-legend-key--dot { width: 10px; height: 10px; border-radius: 50%; }
+
+/* Hemicycle */
+.hemicycle-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.hemicycle-chart {
+  aspect-ratio: 2 / 1.06;
+}
+
+.hemicycle-center {
+  position: absolute;
+  left: 50%;
+  bottom: 2%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+  text-align: center;
+}
+
+.hemicycle-center strong {
+  font-size: clamp(1.375rem, 4vw, var(--sv-type-metric-lg, 36px));
+  font-weight: 800;
+  line-height: 1;
+  color: var(--color-text-primary);
+}
+
+.hemicycle-majority {
+  margin: var(--sv-space-1, 4px) 0 0;
+  font-size: var(--sv-type-caption, 12px);
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+/* Vote number above its session in the "Votes les plus disputés" list */
+.stats-viz-card .close-vote-number {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  font-size: var(--sv-type-label, 13px);
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--color-text-primary);
+}
+
+.stats-viz-card .close-vote-number span {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.hemicycle-legend {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: var(--sv-space-1-5, 6px) var(--sv-space-3, 12px);
+  margin: var(--sv-space-4, 16px) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hemicycle-legend li {
+  display: flex;
+  align-items: center;
+  gap: var(--sv-space-1-5, 6px);
+  min-width: 0;
+  font-size: var(--sv-type-label, 13px);
+}
+
+.hemicycle-legend-code {
+  color: var(--color-text-secondary);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hemicycle-legend-seats {
+  margin-left: auto;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+}
+
+/* Colour scale legend for the heatmaps */
+.stats-gradient-legend {
+  display: flex;
+  align-items: center;
+  gap: var(--sv-space-2, 8px);
+  margin-top: var(--sv-space-2, 8px);
+  font-size: var(--sv-type-caption, 12px);
+  color: var(--color-text-muted);
+}
+
+.stats-gradient-label { color: var(--color-text-secondary); }
+
+.stats-gradient-bar {
+  flex: 0 1 160px;
+  height: 8px;
+  border-radius: var(--radius-full, 999px);
+}
+
+/* Group behaviour section */
+.stats-group-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sv-space-4, 16px);
+}
+
+.stats-section-head h2 {
+  margin: 0 0 var(--sv-space-2, 8px);
+  font-family: var(--font-display, serif);
+  font-size: var(--sv-type-heading-sm, 20px);
+  color: var(--color-text-primary);
+}
+
+.stats-section-head p {
+  max-width: 78ch;
+  margin: 0;
+  font-size: var(--sv-type-label, 13px);
+  line-height: var(--sv-leading-body, 1.6);
+  color: var(--color-text-secondary);
+}
+
+.stats-section-head strong { color: var(--color-gold-light, #e4c76b); }
+
+.stats-coverage-note {
+  margin: 0 0 var(--sv-space-2, 8px);
+  padding: var(--sv-space-2, 8px) var(--sv-space-3, 12px);
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  border-radius: var(--radius-sm, 8px);
+  background: var(--color-gold-dim, rgba(201, 168, 76, 0.15));
+  font-size: var(--sv-type-caption, 12px);
+  color: var(--color-text-primary);
+}
+
+/* Empty and explanatory states */
+.stats-empty {
+  padding: var(--sv-space-6, 24px) var(--sv-space-4, 16px);
+  border: 1px dashed var(--color-border, rgba(255, 255, 255, 0.07));
+  border-radius: var(--radius-md, 12px);
+  font-size: var(--sv-type-label, 13px);
+  line-height: var(--sv-leading-body, 1.6);
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+.stats-empty--warning {
+  text-align: left;
+  border-style: solid;
+  border-color: rgba(201, 168, 76, 0.3);
+  background: rgba(201, 168, 76, 0.06);
+  color: var(--color-text-secondary);
+}
+
+.stats-empty strong { color: var(--color-text-primary); }
+
+.stats-inline-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--sv-color-action-primary, #8585f6);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Data table (text alternative), collapsed by default */
+.chart-data {
+  margin-top: var(--sv-space-3, 12px);
+  font-size: var(--sv-type-caption, 12px);
+  color: var(--color-text-secondary);
+}
+
+.chart-data summary {
+  width: fit-content;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  border-radius: var(--radius-sm, 8px);
+}
+
+.chart-data summary:hover { color: var(--color-text-primary); }
+
+.chart-data summary:focus-visible {
+  outline: var(--sv-outline-focus, 2px solid #8585f6);
+  outline-offset: var(--sv-outline-offset, 4px);
+}
+
+.chart-data-scroll {
+  max-height: 280px;
+  margin-top: var(--sv-space-2, 8px);
+  overflow: auto;
+  border: 1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.04));
+  border-radius: var(--radius-sm, 8px);
+}
+
+.chart-data table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.chart-data th,
+.chart-data td {
+  padding: var(--sv-space-1, 4px) var(--sv-space-2, 8px);
+  border-bottom: 1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.04));
+  text-align: right;
+  white-space: nowrap;
+}
+
+.chart-data thead th {
+  position: sticky;
+  top: 0;
+  background: var(--color-bg-2, #101c2d);
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.chart-data tbody th {
+  text-align: left;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+@media (max-width: 600px) {
+  .stats-viz-kpi strong { font-size: var(--sv-type-lead, 18px); }
+  .hemicycle-legend { grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); }
+}

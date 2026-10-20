@@ -1,0 +1,101 @@
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.react-shell-main {
+  flex: 1;
+  min-height: 50vh;
+  padding-top: 48px;
+  padding-bottom: 72px;
+}
+
+.react-shell-content {
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.react-shell-title {
+  margin: 0 0 var(--sv-space-3, 12px);
+  color: var(--color-text-primary);
+  font-family: var(--font-display, Inter, sans-serif);
+  font-size: clamp(var(--sv-type-heading-md, 28px), 5vw, 42px);
+  line-height: var(--sv-leading-tight, 1.2);
+}
+
+.react-shell-copy {
+  color: var(--color-text-secondary);
+  line-height: 1.65;
+}
+
+.react-shell-card {
+  margin-top: var(--sv-space-7, 28px);
+  padding: var(--sv-card-padding-large, 32px);
+  border: var(--sv-border-subtle, 1px solid var(--color-border-subtle));
+  border-radius: var(--radius-lg, 16px);
+  background: var(--color-bg-card, #141929);
+}
+
+.react-shell-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sv-space-3, 12px);
+  margin-top: var(--sv-space-5, 20px);
+}
+
+.react-shell-count {
+  min-width: 150px;
+  padding: var(--sv-space-3, 12px) var(--sv-space-4, 16px);
+  border: var(--sv-border-subtle, 1px solid var(--color-border-subtle));
+  border-radius: var(--radius-md, 12px);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.react-shell-count strong,
+.react-shell-count span {
+  display: block;
+}
+
+.react-shell-count strong {
+  color: var(--color-text-primary);
+  font-size: var(--sv-type-metric-sm, 22px);
+}
+
+.react-shell-count span {
+  margin-top: 4px;
+  color: var(--color-text-muted);
+  font-size: var(--sv-type-caption, 12px);
+}
+
+.react-shell-action {
+  margin-top: var(--sv-space-4, 16px);
+}
+
+.react-shell-footer-note {
+  color: var(--color-text-muted);
+  font-size: var(--sv-type-caption, 12px);
+}
+
+@media (max-width: 600px) {
+  .react-shell-main {
+    padding-top: 32px;
+    padding-bottom: 48px;
+  }
+
+  .react-shell-card {
+    padding: var(--sv-card-padding-compact, 16px);
+  }
+}
