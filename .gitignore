@@ -1,0 +1,14 @@
+# Local credentials
+.env
+.env.*
+!.env.example
+!.env.*.example
+backend/.env.local
+
+# Python runtime artifacts
+__pycache__/
+*.py[cod]
+.venv/
+
+# Importer download cache
+backend/importers/.cache/

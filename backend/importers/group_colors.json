@@ -1,0 +1,31 @@
+{
+  "_comment": "Display colour per Senate group code (official internal codes: UMP = LR, SOC = SER, CRC = CRCE-K, LREM = RDPI, RTLI = LIRT, AUCUN/NI = non-inscrits). Edit, then run from backend/: python -m importers display-settings --commit. Current groups: senat.fr hemicycle colours (Oct 2026), lightened for contrast on dark cards. Former groups: successor's colour or French Wikipedia party colours; CRARS, GDSRG and RP have none (the site uses a fallback).",
+  "colors": {
+    "UMP": "#6092dc",
+    "SOC": "#fb6f99",
+    "UC": "#7accea",
+    "LREM": "#f1b608",
+    "CRC": "#ff1a1b",
+    "GEST": "#5cb88d",
+    "RDSE": "#a36eb8",
+    "RTLI": "#c7dde2",
+    "UNT": "#7575eb",
+    "NI": "#828282",
+    "AUCUN": "#828282",
+
+    "RPR": "#6092dc",
+    "UNR": "#6092dc",
+    "UDR": "#6092dc",
+    "RI": "#26c4ec",
+    "UREI": "#26c4ec",
+    "CNIP": "#26c4ec",
+    "RIAS": "#26c4ec",
+    "UCDP": "#7accea",
+    "RPCD": "#7accea",
+    "MRP": "#00ffff",
+    "GD": "#a36eb8",
+    "RDE": "#a36eb8",
+    "C": "#ff1a1b",
+    "ECO": "#5cb88d"
+  }
+}

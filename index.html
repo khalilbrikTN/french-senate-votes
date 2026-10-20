@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sénat Votes — Scrutins du Sénat Français</title>
+  <meta name="description" content="Suivez en temps réel les scrutins du Sénat français : résultats, votes par sénateur, groupes politiques et textes adoptés." />
+  <meta name="keywords" content="sénat, france, votes, scrutins, sénateurs, résultats, groupes politiques" />
+  <meta property="og:title" content="Sénat Votes — Scrutins du Sénat Français" />
+  <meta property="og:description" content="Suivez les votes et scrutins du Sénat français." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ============ HEADER ============ -->
+  <header class="site-header" id="site-header">
+    <div class="header-bg"></div>
+    <div class="container header-inner">
+      <a href="#" class="logo" id="logo-btn">
+        <div class="logo-icon">
+          <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M16 2L2 10v2h28v-2L16 2z" fill="currentColor" opacity="0.9"/>
+            <rect x="4" y="14" width="3" height="14" rx="1" fill="currentColor"/>
+            <rect x="10" y="14" width="3" height="14" rx="1" fill="currentColor"/>
+            <rect x="16" y="14" width="3" height="14" rx="1" fill="currentColor"/>
+            <rect x="22" y="14" width="3" height="14" rx="1" fill="currentColor"/>
+            <rect x="2" y="28" width="28" height="3" rx="1" fill="currentColor"/>
+          </svg>
+        </div>
+        <div class="logo-text">
+          <span class="logo-title">Sénat Votes</span>
+          <span class="logo-sub">Scrutins du Sénat Français</span>
+        </div>
+      </a>
+
+      <nav class="nav-links" id="nav-links">
+        <a href="#" class="nav-link active" data-view="scrutins">Scrutins</a>
+        <a href="#" class="nav-link" data-view="senateurs">Sénateurs</a>
+        <a href="#" class="nav-link" data-view="groupes">Groupes</a>
+        <a href="#" class="nav-link" data-view="stats">Statistiques</a>
+      </nav>
+
+      <div class="header-actions">
+        <div class="backend-status-badge" id="backend-status-badge" title="Source des données">
+          <span class="status-dot"></span>
+          <span id="backend-status-text">Données officielles</span>
+        </div>
+        <button class="btn-search" id="header-search-btn" aria-label="Rechercher">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        </button>
+        <div class="year-selector">
+          <select id="year-select" aria-label="Session parlementaire" title="Session parlementaire">
+            <option value="all">Toutes les sessions</option>
+          </select>
+        </div>
+        <button class="hamburger" id="hamburger-btn" aria-label="Menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ SEARCH OVERLAY ============ -->
+  <div class="search-overlay" id="search-overlay">
+    <div class="search-container">
+      <input type="text" id="search-input" placeholder="Rechercher un scrutin, un sénateur, un texte de loi..." autocomplete="off" />
+      <button class="search-close" id="search-close-btn" aria-label="Fermer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="search-results" id="search-results"></div>
+  </div>
+
+  <!-- ============ HERO (Scrutins view only) ============ -->
+  <section class="hero" id="hero-section">
+    <div class="hero-bg">
+      <div class="hero-gradient"></div>
+      <div class="hero-particles" id="hero-particles"></div>
+    </div>
+    <div class="container hero-content">
+      <div class="hero-badge">
+        <span class="pulse-dot"></span>
+        Données officielles du Sénat Français
+      </div>
+      <h1 class="hero-title">
+        Scrutins &amp; Votes<br/>
+        <span class="hero-accent">du Sénat</span>
+      </h1>
+      <p class="hero-desc">
+        Accédez en toute transparence aux résultats des votes du Sénat français : textes adoptés ou rejetés, positions des groupes politiques, et votants individuels.
+      </p>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="hero-stat-value" id="stat-scrutins">—</div>
+          <div class="hero-stat-label">Scrutins</div>
+        </div>
+        <div class="hero-stat-divider"></div>
+        <div class="hero-stat">
+          <div class="hero-stat-value" id="stat-adoptes">—</div>
+          <div class="hero-stat-label">Adoptés</div>
+        </div>
+        <div class="hero-stat-divider"></div>
+        <div class="hero-stat">
+          <div class="hero-stat-value" id="stat-senateurs">348</div>
+          <div class="hero-stat-label">Sénateurs</div>
+        </div>
+      </div>
+      <div class="hero-actions">
+        <button class="btn-primary" id="explore-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          Explorer les scrutins
+        </button>
+        <button class="btn-secondary" id="hero-search-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          Rechercher
+        </button>
+      </div>
+    </div>
+    <div class="scroll-indicator"><div class="scroll-arrow"></div></div>
+  </section>
+
+  <!-- ============ VIEW: SCRUTINS ============ -->
+  <main class="main-content view-panel" id="view-scrutins">
+    <div class="container">
+      <div class="filter-bar">
+        <div class="filter-group">
+          <label class="filter-label">Résultat</label>
+          <div class="filter-chips">
+            <button class="filter-chip active" data-filter="all">Tous</button>
+            <button class="filter-chip" data-filter="adopté">Adoptés</button>
+            <button class="filter-chip" data-filter="rejeté">Rejetés</button>
+          </div>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Trier par</label>
+          <select class="filter-select" id="sort-select">
+            <option value="date-desc">Date (récent → ancien)</option>
+            <option value="date-asc">Date (ancien → récent)</option>
+            <option value="numero-desc">Numéro (décroissant)</option>
+            <option value="numero-asc">Numéro (croissant)</option>
+          </select>
+        </div>
+        <div class="filter-group filter-search-group">
+          <input type="text" id="inline-search" class="filter-input" placeholder="Filtrer par mot-clé..." />
+        </div>
+        <div class="filter-group">
+          <button class="btn-refresh" id="refresh-btn" title="Actualiser les données">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="section-header">
+        <h2 class="section-title">Scrutins <span id="session-label">— Toutes les sessions</span></h2>
+        <div class="results-count" id="results-count"></div>
+      </div>
+
+      <div class="scrutins-grid" id="scrutins-grid">
+        <div class="loading-state"><div class="loading-spinner"></div><p>Chargement des scrutins…</p></div>
+      </div>
+
+      <div class="load-more-container" id="load-more-container" style="display:none;">
+        <button class="btn-load-more" id="load-more-btn">
+          Charger plus de scrutins
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- ============ VIEW: SÉNATEURS ============ -->
+  <main class="main-content view-panel" id="view-senateurs" style="display:none;">
+    <div class="container">
+      <div class="page-hero">
+        <div class="page-hero-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <h1 class="page-hero-title" id="senator-modal-title">Sénateurs</h1>
+        <p class="page-hero-desc">Les sénateurs de la République française, en exercice et anciens — groupe politique, département et historique de votes.</p>
+      </div>
+
+      <div class="filter-bar">
+        <div class="filter-group filter-search-group">
+          <input type="text" id="senator-search" class="filter-input" placeholder="Rechercher par nom, département..." />
+        </div>
+        <div class="filter-group">
+          <label class="filter-label" for="senator-status-filter">Statut</label>
+          <select class="filter-select" id="senator-status-filter">
+            <option value="ACTIF">En exercice</option>
+            <option value="ANCIEN">Anciens sénateurs</option>
+            <option value="all">Tous</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Groupe</label>
+          <select class="filter-select" id="senator-group-filter">
+            <option value="all">Tous les groupes</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Trier par</label>
+          <select class="filter-select" id="senator-sort">
+            <option value="nom-asc">Nom A→Z</option>
+            <option value="nom-desc">Nom Z→A</option>
+            <option value="group">Groupe politique</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="section-header">
+        <h2 class="section-title">Liste des sénateurs</h2>
+        <div class="results-count" id="senator-count"></div>
+      </div>
+
+      <div class="senators-grid" id="senators-grid">
+        <div class="loading-state"><div class="loading-spinner"></div><p>Chargement des sénateurs…</p></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ============ VIEW: GROUPES ============ -->
+  <main class="main-content view-panel" id="view-groupes" style="display:none;">
+    <div class="container">
+      <div class="page-hero">
+        <div class="page-hero-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        </div>
+        <h1 class="page-hero-title">Groupes Politiques</h1>
+        <p class="page-hero-desc">Composition et comportement de vote des groupes parlementaires du Sénat — cliquez sur un groupe pour explorer ses sénateurs.</p>
+      </div>
+      <div id="groups-grid" class="groups-page-grid">
+        <div class="loading-state"><div class="loading-spinner"></div><p>Chargement des groupes…</p></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ============ VIEW: STATISTIQUES ============ -->
+  <main class="main-content view-panel" id="view-stats" style="display:none;">
+    <div class="container">
+      <div class="page-hero">
+        <div class="page-hero-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        </div>
+        <h1 class="page-hero-title">Statistiques</h1>
+        <p class="page-hero-desc">Analyse synthétique des votes et tendances pour la session parlementaire sélectionnée.</p>
+      </div>
+      <div id="stats-content">
+        <div class="loading-state"><div class="loading-spinner"></div><p>Calcul des statistiques…</p></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ============ SCRUTIN DETAIL MODAL ============ -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <button class="modal-close" id="modal-close-btn" aria-label="Fermer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+      <div class="modal-content" id="modal-content"></div>
+    </div>
+  </div>
+
+  <!-- ============ SENATOR DETAIL MODAL ============ -->
+  <div class="modal-overlay" id="senator-modal-overlay">
+    <div class="modal" role="dialog" aria-modal="true">
+      <button class="modal-close" id="senator-modal-close-btn" aria-label="Fermer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+      <div class="modal-content" id="senator-modal-content"></div>
+    </div>
+  </div>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="footer-left">
+        <div class="logo">
+          <div class="logo-icon">
+            <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M16 2L2 10v2h28v-2L16 2z" fill="currentColor" opacity="0.9"/>
+              <rect x="4" y="14" width="3" height="14" rx="1" fill="currentColor"/>
+              <rect x="10" y="14" width="3" height="14" rx="1" fill="currentColor"/>
+              <rect x="16" y="14" width="3" height="14" rx="1" fill="currentColor"/>
+              <rect x="22" y="14" width="3" height="14" rx="1" fill="currentColor"/>
+              <rect x="2" y="28" width="28" height="3" rx="1" fill="currentColor"/>
+            </svg>
+          </div>
+          <div class="logo-text"><span class="logo-title">Sénat Votes</span></div>
+        </div>
+        <p class="footer-desc">Données issues du portail officiel <a href="https://www.senat.fr" target="_blank" rel="noopener">senat.fr</a> — Licence Ouverte Etalab v2.0</p>
+      </div>
+      <div class="footer-links">
+        <a href="https://www.senat.fr/scrutin-public/scr2026.html" target="_blank" rel="noopener">Source officielle</a>
+        <a href="https://data.senat.fr" target="_blank" rel="noopener">data.senat.fr</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="container"><p>© 2026 Sénat Votes · Données officielles du Parlement français</p></div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
