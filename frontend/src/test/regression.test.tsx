@@ -18,6 +18,7 @@ const apiMock = vi.hoisted(() => ({
   scrutins: vi.fn(),
   stats: vi.fn(),
   groupStats: vi.fn(),
+  themeStats: vi.fn(),
   senatorVotes: vi.fn(),
   senatorDetail: vi.fn(),
   scrutinDetail: vi.fn(),

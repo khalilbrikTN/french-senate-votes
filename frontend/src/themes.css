@@ -1,0 +1,55 @@
+/* Votes by theme: theme filter of the votes page, theme tag on the vote cards, theme charts. */
+
+/* The shared dropdown stacks its label; in the votes filter bar it sits inline like the others. */
+.theme-filter-group { min-width: 0; }
+
+.theme-filter-field {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--sv-space-2, 8px);
+}
+
+.theme-filter-field > label {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.theme-filter-field .filter-dropdown { width: 220px; }
+
+.theme-filter-field .filter-select-trigger {
+  min-height: var(--sv-control-height-input, 40px);
+  font-size: var(--sv-type-label, 13px);
+}
+
+.theme-filter-note {
+  margin: calc(-1 * var(--sv-space-3, 12px)) 0 var(--sv-space-4, 16px);
+  color: var(--sv-color-text-muted, var(--color-text-muted));
+  font-size: var(--sv-type-caption, 12px);
+}
+
+.card-tags {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  gap: var(--sv-space-1, 4px) var(--sv-space-2, 8px);
+}
+
+.card-tag--theme {
+  overflow: hidden;
+  max-width: 100%;
+  color: var(--color-text-secondary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .theme-filter-group { flex: 1 1 100%; }
+  .theme-filter-field { width: 100%; }
+  .theme-filter-field > label { flex: 0 0 76px; white-space: normal; }
+  .theme-filter-field .filter-dropdown { width: auto; flex: 1 1 auto; }
+  .theme-filter-field .filter-select-menu { right: auto; left: 0; width: 100%; }
+}

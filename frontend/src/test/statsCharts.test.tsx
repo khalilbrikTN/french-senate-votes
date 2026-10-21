@@ -7,7 +7,8 @@ import {
 import { inkOn, sequentialColor } from '../lib/chartTheme';
 import type { GroupStats, Scrutin } from '../types';
 
-const apiMock = vi.hoisted(() => ({ groupStats: vi.fn() }));
+// themeStats never resolves here: the theme charts stay loading (tested in themes.test.tsx).
+const apiMock = vi.hoisted(() => ({ groupStats: vi.fn(), themeStats: vi.fn(() => new Promise(() => {})) }));
 vi.mock('../api/endpoints', () => ({ api: apiMock }));
 
 function vote(partial: Partial<Scrutin>): Scrutin {

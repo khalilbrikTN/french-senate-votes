@@ -50,6 +50,8 @@ backend/
       groups.py       /api/v1/groups...
       votes.py        /api/v1/votes...
       legacy.py       /api/status, /api/senateurs, /api/scrutins, /api/stats, /api/stats/groups
+      loyalty.py      /api/loyalty, /api/loyalty/{matricule}/rebels
+      compare.py      /api/compare/{matricule_a}/{matricule_b}
 ```
 
 ## Endpoints
@@ -85,6 +87,15 @@ groups included (`RPR`, `UDR`, `ECO`...), to its colour; app.js uses it for the
 career timelines. When the backend is unreachable app.js falls back to the colours
 and presidents hardcoded in `POLITICAL_GROUPS` / `HISTORICAL_GROUP_COLORS`.
 
+`/api/compare/{a}/{b}?limit=20` → agreement between two senators, computed in one SQL
+statement (self-join of `individual_votes` on the vote) over the votes where both voted
+pour, contre or abstention: `shared`, `agree`, `agreementRate` (0..1, null when
+`shared` is 0), `breakdown` (`bothPour`, `bothContre`, `bothAbstention`, `opposite`,
+`oneAbstained`), `firstDate`/`lastDate`, and the latest `limit` (≤ 100) `disagreements`
+(`session`, `number`, `date`, `title`, `result`, `positionA`, `positionB`). 404 for an
+unknown matricule, 400 when both are the same. Cached per ordered pair until the importers
+commit. Only the sitting senators' individual votes are loaded.
+
 `/api/stats/groups` → group behaviour for the Statistics page, aggregated in one SQL
 statement from `individual_votes` (app group codes, `UMP` → `LR`...). Individual votes
 exist only for the senators sitting at import time, so older sessions are partial:
@@ -103,6 +114,19 @@ exist only for the senators sitting at import time, so older sessions are partia
 
 The frontend hides group figures for sessions under 50 % coverage and flags those under
 70 % as partial. Built in about 1 s, ~35 KB (4 KB gzipped).
+
+`/api/loyalty` → party loyalty of every sitting senator (`routers/loyalty.py`). On each vote a
+group's majority is the strict plurality of its members' pour/contre/abstention (ties: no
+position; groups with fewer than 3 expressed positions and non-inscrits `AUCUN`/`NI` excluded),
+using the group recorded on the vote date. `follows` / `rebels` count the senator's expressed
+votes equal to / different from that majority, `ties` the votes where the group had none;
+`loyalty` = follows / (follows + rebels) in %, `ranked` when that sum ≥ `minRankedVotes` (100).
+`groups[]` (current group): `avgLoyalty` (mean of ranked members) and pooled `loyalty`.
+One SQL statement, ~2–3 s cold, warmed at startup, ~45 KB (9 KB gzipped).
+`/api/loyalty/{matricule}/rebels?limit=` (1–1000, default 100) → the same summary plus the
+senator's current `group` and `groupAvgLoyalty`, `total` rebel votes and the latest `limit`
+of them with the group's tally (`groupPour`, `groupContre`, `groupAbstention`) and majority
+(`groupPosition`). Cached per senator and limit; ~0.1–0.7 s cold.
 
 ### Compression and caching
 

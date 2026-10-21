@@ -5,10 +5,13 @@ import { formatSessionRange } from './lib/format';
 import { preferredScrollBehavior } from './lib/motion';
 import { filterScrutins, getSessionScrutins } from './lib/scrutins';
 import type { ResultFilter, ScrutinSort } from './lib/scrutins';
+import { ALL_THEMES, filterByTheme, hasThemes, themeCounts } from './lib/themes';
 import type { Scrutin, Stats } from './types';
 import EmptyState from './components/EmptyState';
+import FilterDropdown, { type FilterDropdownOption } from './components/FilterDropdown';
 import ScrutinCard from './components/ScrutinCard';
 import SectionHeader from './components/SectionHeader';
+import './themes.css';
 
 // The hemicycle carries the chart library: load it separately so the landing page appears first.
 const Hemicycle = lazy(() => import('./stats/Hemicycle'));
@@ -32,6 +35,7 @@ export default function ScrutinsView({ isActive = true, scrutins, stats, selecte
   const [resultFilter, setResultFilter] = useState<ResultFilter>('all');
   const [sort, setSort] = useState<ScrutinSort>('date-desc');
   const [search, setSearch] = useState('');
+  const [themeFilter, setThemeFilter] = useState<string>(ALL_THEMES);
   const [visibleCount, setVisibleCount] = useState<number>(CONFIG.PAGE_SIZE);
 
   const sessionScrutins = useMemo(
@@ -39,9 +43,19 @@ export default function ScrutinsView({ isActive = true, scrutins, stats, selecte
     [scrutins, selectedSession],
   );
   const filteredScrutins = useMemo(
-    () => filterScrutins(sessionScrutins, { result: resultFilter, search, sort }),
-    [sessionScrutins, resultFilter, search, sort],
+    () => filterScrutins(filterByTheme(sessionScrutins, themeFilter), { result: resultFilter, search, sort }),
+    [sessionScrutins, themeFilter, resultFilter, search, sort],
   );
+  // Themes: automatic classification of the titles (see the backend's app/themes.py).
+  // Every theme of the data stays listed; the counts follow the header session.
+  const showThemes = useMemo(() => hasThemes(scrutins), [scrutins]);
+  const themeOptions = useMemo<FilterDropdownOption[]>(() => [
+    { value: ALL_THEMES, label: 'Tous les thèmes', hint: `${sessionScrutins.length.toLocaleString('fr-FR')} scrutins` },
+    ...themeCounts(scrutins, sessionScrutins).map(theme => ({
+      value: theme.id, label: theme.label,
+      hint: `${theme.count.toLocaleString('fr-FR')} scrutin${theme.count === 1 ? '' : 's'}`,
+    })),
+  ], [scrutins, sessionScrutins]);
   const visibleScrutins = filteredScrutins.slice(0, visibleCount);
   const chartTheme = useMemo(() => readChartTheme(), []);
   const sessionLabel = selectedSession === 'all'
@@ -114,6 +128,19 @@ export default function ScrutinsView({ isActive = true, scrutins, stats, selecte
                   </div>
                 </div>
 
+                {showThemes && (
+                  <div className="filter-group theme-filter-group">
+                    <FilterDropdown
+                      id="scrutin-theme"
+                      label="Thème"
+                      value={themeFilter}
+                      options={themeOptions}
+                      onChange={value => resetPagination(() => setThemeFilter(value))}
+                      className="theme-filter-field"
+                    />
+                  </div>
+                )}
+
                 <div className="filter-group">
                   <label className="filter-label" htmlFor="scrutin-sort">Trier par</label>
                   <select id="scrutin-sort" className="filter-select" value={sort} onChange={event => resetPagination(() => setSort(event.target.value as ScrutinSort))}>
@@ -141,6 +168,12 @@ export default function ScrutinsView({ isActive = true, scrutins, stats, selecte
                 title={<>Scrutins <span>— {sessionLabel}</span></>}
                 count={<>{filteredScrutins.length.toLocaleString('fr-FR')} scrutin{filteredScrutins.length === 1 ? '' : 's'}</>}
               />
+
+              {themeFilter !== ALL_THEMES && (
+                <p className="theme-filter-note">
+                  Thème attribué automatiquement d’après l’intitulé du scrutin : classement indicatif, un seul thème principal par scrutin.
+                </p>
+              )}
 
               <div className="scrutins-grid">
                 {visibleScrutins.length > 0 ? visibleScrutins.map((scrutin, index) => (

@@ -32,6 +32,7 @@
   min-width: 112px;
 }
 .loyalty-score-value {
+  white-space: nowrap;
   font-size: 28px;
   font-weight: 800;
   line-height: 1.1;
@@ -113,6 +114,14 @@
   gap: 3px;
   flex-shrink: 0;
   width: 92px;
+}
+/* The history list sizes its badges with flex-basis along a row; here they sit in a column. */
+.senator-history-list.loyalty-rebel-list .history-vote-badge {
+  flex: 0 0 auto;
+  width: 100%;
+  min-width: 0;
+  padding: 3px 6px;
+  font-size: 10px;
 }
 .loyalty-rebel-vs { font-size: 10px; color: var(--color-text-muted); text-transform: uppercase; }
 .loyalty-group-position {

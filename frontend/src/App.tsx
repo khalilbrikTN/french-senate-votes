@@ -261,6 +261,7 @@ function App() {
                 setSenatorStatusFilter('ACTIF');
                 window.location.hash = 'senateurs';
               }}
+              onOpenSenator={openSenator}
             />
           </div>
           <div
