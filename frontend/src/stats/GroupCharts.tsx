@@ -13,6 +13,12 @@ import { ChartCard, ChartEmpty, GradientLegend, nf, shortSession } from './commo
 const shortName = (code: string) => POLITICAL_GROUPS[code]?.short ?? code;
 const pct = (value: number) => `${nf(value * 100)} %`;
 const EMPTY_CELL = 'rgba(255,255,255,0.03)';
+// ECharts requires a visualMap next to a heatmap series. Each cell already carries its own
+// colour, so this one is hidden and maps nothing (opacity stays 1 for every value).
+const HEATMAP_VISUAL_MAP = {
+  show: false, seriesIndex: 0, dimension: 2, min: 0, max: 100,
+  inRange: { opacity: 1 }, outOfRange: { opacity: 1 },
+};
 
 export type GroupStatsState =
   | { kind: 'loading' }
@@ -117,6 +123,7 @@ function AgreementChart({ data, selectedSession, stats, theme }: {
         axisLine: { show: false }, axisTick: { show: false }, splitLine: { show: false },
         axisLabel: { ...groupAxisLabel(groups, stats, theme), interval: 0 },
       },
+      visualMap: HEATMAP_VISUAL_MAP,
       series: [{
         type: 'heatmap',
         data: [
@@ -248,6 +255,7 @@ function CohesionChart({ data, selectedSession, stats, theme }: {
         axisLine: { show: false }, axisTick: { show: false }, splitLine: { show: false },
         axisLabel: { ...groupAxisLabel(grid.groups, stats, theme), interval: 0 },
       },
+      visualMap: HEATMAP_VISUAL_MAP,
       series: [{
         type: 'heatmap',
         data: grid.cells.map(cell => {

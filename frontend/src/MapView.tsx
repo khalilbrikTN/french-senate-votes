@@ -1,5 +1,5 @@
 import {
-  memo, useCallback, useId, useMemo, useRef, useState,
+  memo, useCallback, useMemo, useRef, useState,
   type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent, type RefObject,
 } from 'react';
 import PoliticalGroupBadge from './components/PoliticalGroupBadge';
@@ -28,19 +28,18 @@ interface MapViewProps {
 const shortName = (code: string) => (code && POLITICAL_GROUPS[code]?.short) || code || 'Sans groupe';
 const plural = (n: number, word: string) => `${n.toLocaleString('fr-FR')} ${word}${n > 1 ? 's' : ''}`;
 
-// Colour of a department: its dominant group; stripes of the tied groups' colours when several
-// groups have the same number of senators; nothing when it has no sitting senator.
-// Returned as a key: '' (none), 'LR' (one group) or 'LR|SER' (tie).
+// Colour of a department: its dominant group; a neutral fill (--map-tie) when several groups have
+// the same number of senators (the tooltip and panel give the detail); nothing when it has no
+// sitting senator. Returned as a key: '' (none), 'LR' (one group) or 'LR|SER' (tie).
 function fillKey(department: DepartmentSummary | undefined): string {
   if (!department || department.senators.length === 0) return '';
   return department.leaders.join('|');
 }
 const isTie = (key: string) => key.includes('|');
 
-// CSS swatch for a tie, matching the SVG stripes.
-function tieGradient(key: string, stats: Stats | null): string {
-  const stops = key.split('|').map((group, i) => `${getGroupColor(group, stats)} ${i * 3}px ${(i + 1) * 3}px`);
-  return `repeating-linear-gradient(45deg, ${stops.join(', ')})`;
+function fillColor(key: string, stats: Stats | null): string {
+  if (!key) return 'var(--map-empty)';
+  return isTie(key) ? 'var(--map-tie)' : getGroupColor(key, stats);
 }
 
 export default function MapView({ senators, stats, onOpenSenator }: MapViewProps) {
@@ -53,23 +52,10 @@ export default function MapView({ senators, stats, onOpenSenator }: MapViewProps
   const panelRef = useRef<HTMLElement>(null);
   const panelHeadingRef = useRef<HTMLHeadingElement>(null);
   const hoveredRef = useRef<string | null>(null);
-  const idPrefix = `map${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
 
-  // Every distinct tie (e.g. 'LR|SER') gets one stripe pattern per frame.
-  const ties = useMemo(() => [...new Set(
-    [...index.byCode.values()].map(fillKey).filter(isTie),
-  )].sort(), [index]);
-
-  const fillFor = useCallback((code: string, frameId: string) => {
-    const key = fillKey(index.byCode.get(code));
-    if (!key) return 'var(--map-empty)';
-    if (isTie(key)) return `url(#${idPrefix}-${frameId}-tie${ties.indexOf(key)})`;
-    return getGroupColor(key, stats);
-  }, [index, stats, idPrefix, ties]);
-
-  const tieColors = useMemo(
-    () => ties.map(key => key.split('|').map(group => getGroupColor(group, stats))),
-    [ties, stats],
+  const fillFor = useCallback(
+    (code: string) => fillColor(fillKey(index.byCode.get(code)), stats),
+    [index, stats],
   );
 
   // Legend: every group colouring at least one territory, largest first, then the ties.
@@ -142,8 +128,6 @@ export default function MapView({ senators, stats, onOpenSenator }: MapViewProps
 
   const frameProps = {
     fillFor,
-    idPrefix,
-    tieColors,
     selectedCode,
     hoveredCode,
     onPointerOver: handlePointerOver,
@@ -179,19 +163,18 @@ export default function MapView({ senators, stats, onOpenSenator }: MapViewProps
               <MapFrameSvg
                 frame={GEOMETRY.frames.metro}
                 className="map-svg map-svg--metro"
-                frameId="metro"
                 label={`Carte de France métropolitaine : ${index.mapped.length} territoires dessinés. La liste des départements sous la carte donne le même accès au clavier.`}
                 {...frameProps}
               />
 
               <ul className="map-insets" aria-label="Zooms et départements d’outre-mer">
                 <li className="map-inset map-inset--paris">
-                  <MapFrameSvg frame={GEOMETRY.frames.paris} frameId="paris" stripe={3} className="map-svg" label="Zoom sur Paris et la petite couronne" {...frameProps} />
+                  <MapFrameSvg frame={GEOMETRY.frames.paris} className="map-svg" label="Zoom sur Paris et la petite couronne" {...frameProps} />
                   <span className="map-inset-label">Paris et petite couronne</span>
                 </li>
                 {OVERSEAS_FRAMES.map(code => (
                   <li className="map-inset" key={code}>
-                    <MapFrameSvg frame={GEOMETRY.frames[code]} frameId={code} stripe={4} className="map-svg" label={index.byCode.get(code)?.name ?? code} {...frameProps} />
+                    <MapFrameSvg frame={GEOMETRY.frames[code]} className="map-svg" label={index.byCode.get(code)?.name ?? code} {...frameProps} />
                     <span className="map-inset-label">{index.byCode.get(code)?.name ?? code}</span>
                   </li>
                 ))}
@@ -237,15 +220,15 @@ export default function MapView({ senators, stats, onOpenSenator }: MapViewProps
                 </li>
               ))}
               {legend.tied > 0 && (
-                <li title="Plusieurs groupes à égalité : rayures aux couleurs de ces groupes">
+                <li title="Plusieurs groupes à égalité : survolez ou cliquez le territoire pour voir lesquels">
                   <span className="map-legend-key map-swatch--tie" aria-hidden="true" />
-                  <span className="map-legend-label">Égalité (rayures)</span>
+                  <span className="map-legend-label">Égalité</span>
                   <span className="map-legend-value">{legend.tied}</span>
                 </li>
               )}
             </ul>
             <p className="map-caption">
-              Couleur : groupe ayant le plus de sénateurs en exercice dans le territoire (rayures aux couleurs des groupes à égalité) ;
+              Couleur : groupe ayant le plus de sénateurs en exercice dans le territoire (gris : plusieurs groupes à égalité) ;
               le nombre indique les territoires concernés. {plural(total, 'sénateur')} : {placedOnMap} sur la carte, {onTiles} dans
               les collectivités et pour les Français de l’étranger{index.withoutDepartment.length ? `, ${index.withoutDepartment.length} sans circonscription connue` : ''}.
               Données : <a href="https://data.senat.fr" target="_blank" rel="noopener noreferrer">data.senat.fr</a>.
@@ -318,11 +301,7 @@ interface FrameProps {
   frame: MapFrame;
   className: string;
   label: string;
-  frameId: string;
-  stripe?: number; // stripe width of tie patterns, in the frame's units (~4 px on screen)
-  fillFor: (code: string, frameId: string) => string;
-  idPrefix: string;
-  tieColors: string[][];
+  fillFor: (code: string) => string;
   selectedCode: string | null;
   hoveredCode: string | null;
   onPointerOver: (event: ReactPointerEvent) => void;
@@ -333,22 +312,21 @@ interface FrameProps {
 
 // The base shapes only change with the colours; hover and selection are drawn as overlays on top,
 // so moving the pointer re-renders two paths, not a hundred.
-const FrameShapes = memo(function FrameShapes({ frame, frameId, fillFor }: {
+const FrameShapes = memo(function FrameShapes({ frame, fillFor }: {
   frame: MapFrame;
-  frameId: string;
-  fillFor: (code: string, frameId: string) => string;
+  fillFor: (code: string) => string;
 }) {
   return (
     <g className="map-shapes">
       {frame.features.map(feature => (
-        <path key={feature.code} d={feature.d} data-code={feature.code} fill={fillFor(feature.code, frameId)} />
+        <path key={feature.code} d={feature.d} data-code={feature.code} fill={fillFor(feature.code)} />
       ))}
     </g>
   );
 });
 
 function MapFrameSvg({
-  frame, frameId, stripe = 8, className, label, fillFor, idPrefix, tieColors, selectedCode, hoveredCode,
+  frame, className, label, fillFor, selectedCode, hoveredCode,
   onPointerOver, onPointerMove, onPointerLeave, onClick,
 }: FrameProps) {
   const selected = frame.features.find(feature => feature.code === selectedCode);
@@ -364,25 +342,7 @@ function MapFrameSvg({
       onPointerLeave={onPointerLeave}
       onClick={onClick}
     >
-      {tieColors.length > 0 && (
-        <defs>
-          {tieColors.map((colors, i) => (
-            <pattern
-              key={i}
-              id={`${idPrefix}-${frameId}-tie${i}`}
-              width={stripe * colors.length}
-              height={stripe * colors.length}
-              patternUnits="userSpaceOnUse"
-              patternTransform="rotate(45)"
-            >
-              {colors.map((color, j) => (
-                <rect key={j} x={j * stripe} width={stripe} height={stripe * colors.length} fill={color} />
-              ))}
-            </pattern>
-          ))}
-        </defs>
-      )}
-      <FrameShapes frame={frame} frameId={frameId} fillFor={fillFor} />
+      <FrameShapes frame={frame} fillFor={fillFor} />
       {hovered && <path className="map-outline map-outline--hover" d={hovered.d} />}
       {selected && <path className="map-outline map-outline--selected" d={selected.d} />}
     </svg>
@@ -390,9 +350,7 @@ function MapFrameSvg({
 }
 
 function GroupSwatch({ department, stats }: { department: DepartmentSummary; stats: Stats | null }) {
-  const key = fillKey(department);
-  const background = !key ? 'var(--map-empty)' : isTie(key) ? tieGradient(key, stats) : getGroupColor(key, stats);
-  return <span className="map-swatch" style={{ background }} aria-hidden="true" />;
+  return <span className="map-swatch" style={{ background: fillColor(fillKey(department), stats) }} aria-hidden="true" />;
 }
 
 function GroupBreakdown({ department, stats }: { department: DepartmentSummary; stats: Stats | null }) {

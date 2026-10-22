@@ -28,6 +28,7 @@ def warm_cache():
         cache.cached_body(("scrutins",), legacy.build_scrutins)
         cache.cached_body(("stats-groups",), legacy.build_group_stats)
         cache.cached_body(("loyalty",), loyalty.build_loyalty)
+        cache.cached_body(("stats-themes",), theme_routes.build_theme_stats)
     except Exception:
         pass  # the first request builds them instead
 
