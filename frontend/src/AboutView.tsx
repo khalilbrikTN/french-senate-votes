@@ -63,7 +63,7 @@ export default function AboutView() {
             <a className="about-feature-card" href="#senateurs">
               <span className="about-feature-index">02</span>
               <h3>Les sénateurs</h3>
-              <p>Consultez les profils, les groupes, les départements et les historiques de vote.</p>
+              <p>Consultez les profils, les départements et les historiques de vote, et comparez deux sénateurs.</p>
               <span className="about-feature-arrow" aria-hidden="true">↗</span>
             </a>
             <a className="about-feature-card" href="#groupes">
@@ -72,10 +72,22 @@ export default function AboutView() {
               <p>Découvrez la composition des groupes et la manière dont ils se positionnent.</p>
               <span className="about-feature-arrow" aria-hidden="true">↗</span>
             </a>
-            <a className="about-feature-card" href="#stats">
+            <a className="about-feature-card" href="#independance">
               <span className="about-feature-index">04</span>
+              <h3>L’indépendance</h3>
+              <p>Repérez les sénateurs qui s’écartent le plus souvent de la position de leur groupe.</p>
+              <span className="about-feature-arrow" aria-hidden="true">↗</span>
+            </a>
+            <a className="about-feature-card" href="#carte">
+              <span className="about-feature-index">05</span>
+              <h3>La carte</h3>
+              <p>Voyez quel groupe domine dans chaque département et qui représente votre territoire.</p>
+              <span className="about-feature-arrow" aria-hidden="true">↗</span>
+            </a>
+            <a className="about-feature-card" href="#stats">
+              <span className="about-feature-index">06</span>
               <h3>Les statistiques</h3>
-              <p>Observez les tendances et les résultats à l’échelle des sessions parlementaires.</p>
+              <p>Observez les tendances, les thèmes et la cohésion des groupes au fil des sessions.</p>
               <span className="about-feature-arrow" aria-hidden="true">↗</span>
             </a>
           </div>
