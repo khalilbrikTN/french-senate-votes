@@ -42,10 +42,10 @@ async def lifespan(app):
 
 
 app = FastAPI(
-    title="Sénat Votes API",
+    title="Regard Sénat API",
     version="1.0.0",
     description=(
-        "Read-only API over the Sénat Votes database. Data: Sénat (data.senat.fr), "
+        "Read-only API over the Regard Sénat database. Data: Sénat (data.senat.fr), "
         "Licence Ouverte 2.0. See /api/v1/sources for files, checksums and coverage notes."
     ),
     lifespan=lifespan,

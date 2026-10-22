@@ -8,7 +8,7 @@ export default function AboutView() {
           <div className="about-hero-copy">
             <h1 id="about-title">Comprendre le Sénat, <em>vote après vote</em></h1>
             <p className="about-lead">
-              Sénat Votes rend les scrutins publics plus faciles à consulter. Le projet aide chacune et chacun à comprendre les décisions prises au Parlement et les positions exprimées par les sénateurs.
+              Regard Sénat rend les scrutins publics plus faciles à consulter. Le projet aide chacune et chacun à comprendre les décisions prises au Parlement et les positions exprimées par les sénateurs.
             </p>
             <div className="about-hero-actions">
               <a className="btn-primary" href="#scrutins">Explorer les scrutins <span aria-hidden="true">↗</span></a>
@@ -37,7 +37,7 @@ export default function AboutView() {
           </div>
           <div className="about-purpose-copy">
             <p>
-              Les lois et les amendements influencent la vie de toutes et tous. Pourtant, les débats parlementaires et les votes peuvent sembler lointains ou difficiles à suivre. Sénat Votes rassemble les résultats des scrutins, les votes individuels et les positions des groupes dans un même espace de consultation.
+              Les lois et les amendements influencent la vie de toutes et tous. Pourtant, les débats parlementaires et les votes peuvent sembler lointains ou difficiles à suivre. Regard Sénat rassemble les résultats des scrutins, les votes individuels et les positions des groupes dans un même espace de consultation.
             </p>
             <p>
               L’objectif est de donner à chacun des repères simples pour suivre le travail du Sénat, comparer les votes et se forger une opinion à partir des faits. Le site s’adresse aux citoyens, aux étudiants, aux journalistes et à toute personne curieuse de la vie publique.
@@ -107,7 +107,7 @@ export default function AboutView() {
           <div className="about-author-copy">
             <p className="about-section-kicker">À l’origine du projet</p>
             <h2 id="about-author-title">Développé par Mohamed Khalil Brik</h2>
-            <p>Sénat Votes est une initiative indépendante conçue pour rendre les données parlementaires plus accessibles et utiles à toutes et tous.</p>
+            <p>Regard Sénat est une initiative indépendante conçue pour rendre les données parlementaires plus accessibles et utiles à toutes et tous.</p>
           </div>
           <a className="about-author-link" href="https://khalilbriktn.github.io/personal-website/" target="_blank" rel="noopener noreferrer">
             Découvrir son site <span aria-hidden="true">↗</span>

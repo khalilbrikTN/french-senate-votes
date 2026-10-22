@@ -1,5 +1,5 @@
 @echo off
-title Senat Votes - Mise a jour des donnees
+title Regard Senat - Mise a jour des donnees
 chcp 65001 > nul
 cd /d "%~dp0"
 

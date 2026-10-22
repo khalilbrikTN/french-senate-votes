@@ -1,4 +1,4 @@
-# Sénat Votes
+# Regard Sénat
 
 A website for exploring public votes (*scrutins publics*) in the French Senate: what was
 voted, how each senator voted, and how the political groups are composed.
