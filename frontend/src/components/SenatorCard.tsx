@@ -32,7 +32,7 @@ export default function SenatorCard({ senator, stats, onOpen, onOpenPhoto }: Sen
             style={{ borderColor: `${color}55` }}
             onClick={() => onOpenPhoto(senator.avatar!, senator.name)}
           >
-            <img src={senator.avatar} alt="" className="senator-photo-img" onError={() => setImageFailed(true)} />
+            <img src={senator.avatar} alt="" className="senator-photo-img" loading="lazy" decoding="async" onError={() => setImageFailed(true)} />
             <span className="senator-avatar-dot" style={{ background: color }} />
           </button>
         ) : (

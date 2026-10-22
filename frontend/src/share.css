@@ -1,0 +1,57 @@
+/* Share button in the scrutin and senator dialogs (reuses .modal-link) and the route notice. */
+.share-button { font-size: 13px; line-height: inherit; }
+.share-button.is-copied {
+  color: var(--color-green, #22c55e);
+  border-color: rgba(34, 197, 94, 0.4);
+  background: rgba(34, 197, 94, 0.12);
+}
+.share-button.is-failed {
+  color: var(--color-text-secondary);
+  border-color: rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.1);
+}
+.share-button:focus-visible { outline: 2px solid var(--sv-color-action-primary-strong, #8585f6); outline-offset: 2px; }
+
+.modal-share-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.modal-share-row .modal-link { margin-top: 0; }
+.senator-official-link-row { gap: 8px; flex-wrap: wrap; }
+.senator-official-link-row .share-button { font-size: 12px; }
+
+.route-notice {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: min(440px, calc(100vw - 32px));
+  padding: 12px 12px 12px 18px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md, 12px);
+  background: var(--color-bg-card);
+  box-shadow: var(--shadow-card);
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  animation: route-notice-in 0.25s ease;
+}
+.route-notice-icon { color: var(--sv-color-action-primary-strong, #8585f6); font-size: 16px; }
+.route-notice-text { flex: 1; }
+.route-notice-close {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border-radius: 50%;
+  color: var(--color-text-muted);
+  font-size: 18px;
+  line-height: 1;
+}
+.route-notice-close:hover { color: var(--color-text-primary); background: rgba(255, 255, 255, 0.07); }
+@keyframes route-notice-in {
+  from { opacity: 0; transform: translate(-50%, 8px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .route-notice { animation: none; }
+}

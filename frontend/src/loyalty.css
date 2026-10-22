@@ -301,3 +301,33 @@ button.loyalty-row:hover { background: rgba(255,255,255,0.05); border-color: var
   .loyalty-row-score { width: 72px; }
   .loyalty-row-value { font-size: 14px; }
 }
+
+/* Indépendance page: clear the fixed navigation like the other content-only views. */
+#view-independance.main-content {
+  padding-top: calc(var(--header-h) + var(--sv-space-8, 32px));
+}
+
+/* Groupes page: link to the Indépendance page. */
+.groups-independence-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: var(--sv-space-12, 48px);
+  padding: var(--sv-card-padding-default, 24px);
+  background: var(--sv-color-surface-card, var(--color-bg-card));
+  border: var(--sv-border-card, 1px solid var(--color-border));
+  border-radius: var(--sv-card-radius-large, var(--radius-xl));
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  transition: border-color 0.2s ease;
+}
+.groups-independence-link:hover,
+.groups-independence-link:focus-visible { border-color: var(--color-accent, #8585f6); }
+.groups-independence-link > span { display: grid; gap: 4px; }
+.groups-independence-link strong {
+  font-family: var(--font-display);
+  font-size: var(--sv-type-heading-md, 22px);
+  color: var(--color-text-primary);
+}
+.groups-independence-link svg { flex: none; width: 22px; height: 22px; color: var(--color-text-muted); }

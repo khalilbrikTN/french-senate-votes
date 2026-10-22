@@ -1,13 +1,20 @@
-import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { HttpError, RequestTimeoutError } from './api/client';
 import { api } from './api/endpoints';
+import { loadInitialData } from './api/initialLoad';
 import AboutView from './AboutView';
 import developerPhoto from './assets/developer.jpg';
+import AccessibleDialog from './components/AccessibleDialog';
+import ErrorBoundary, { ErrorFallback } from './components/ErrorBoundary';
 import PhotoPreviewDialog from './components/PhotoPreviewDialog';
+import RouteNotice from './components/RouteNotice';
 import HeaderSearch from './HeaderSearch';
 import GroupsView from './GroupsView';
+import IndependenceView from './IndependenceView';
 import { formatSessionRange } from './lib/format';
 import { preferredScrollBehavior } from './lib/motion';
-import { listSessions } from './lib/scrutins';
+import { dialogHash, parseHash, readDialogHistoryState, scrutinHash, senatorHash, type DialogHistoryState, type DialogRoute } from './lib/routes';
+import { findScrutin, listSessions } from './lib/scrutins';
 import SenatorsView from './SenatorsView';
 import SenatorDetailDialog from './SenatorDetailDialog';
 import ScrutinDetailDialog from './ScrutinDetailDialog';
@@ -23,6 +30,7 @@ const VIEWS: Array<{ id: View; label: string }> = [
   { id: 'scrutins', label: 'Scrutins' },
   { id: 'senateurs', label: 'Sénateurs' },
   { id: 'groupes', label: 'Groupes' },
+  { id: 'independance', label: 'Indépendance' },
   { id: 'carte', label: 'Carte' },
   { id: 'stats', label: 'Statistiques' },
   { id: 'about', label: 'À propos' },
@@ -35,23 +43,59 @@ interface LoadedData {
 }
 
 type LoadState =
-  | { kind: 'loading' }
+  | { kind: 'loading'; slow?: boolean }
   | { kind: 'error'; message: string }
   | { kind: 'empty'; data: LoadedData }
   | { kind: 'ready'; data: LoadedData };
 
 type ActiveDialog =
   | { kind: 'scrutin'; scrutin: Scrutin }
-  | { kind: 'senator'; senator: Senator }
-  | null;
+  | { kind: 'senator'; senator: Senator };
 
-function readViewFromHash(): View {
-  const hash = window.location.hash.slice(1);
-  return VIEWS.some(view => view.id === hash) ? hash as View : 'scrutins';
+// Where the dialog named by the address stands: shown, waiting for data, or unknown.
+type DialogResolution =
+  | { status: 'none' }
+  | { status: 'pending' }
+  | { status: 'open'; dialog: ActiveDialog }
+  | { status: 'missing'; message: string };
+
+type FormerSenatorsState =
+  | { kind: 'idle' | 'loading' | 'error' }
+  | { kind: 'ready'; senators: Senator[] };
+
+// The address plus what the app stored in history.state for the dialog entries it pushed.
+interface RouteSnapshot {
+  hash: string;
+  depth: number;
+  baseView: View | undefined;
 }
 
+function readRouteSnapshot(): RouteSnapshot {
+  const { svDialogDepth, svBaseView } = readDialogHistoryState(window.history.state);
+  return { hash: window.location.hash, depth: svDialogDepth ?? 0, baseView: svBaseView };
+}
+
+// View shown for an address: a dialog keeps the view it was opened over, or else its own default view.
+function viewOfRoute(route: RouteSnapshot): View {
+  const parsed = parseHash(route.hash);
+  return parsed.dialog ? route.baseView ?? parsed.view : parsed.view;
+}
+
+const NOTICE_SCRUTIN_MISSING = 'Ce scrutin est introuvable.';
+const NOTICE_SENATOR_MISSING = 'Ce sénateur est introuvable.';
+const NOTICE_SENATOR_UNAVAILABLE = 'Cette fiche n’a pas pu être chargée. Réessayez dans un instant.';
+
+// After this delay the loading screen explains that the (sleeping) server is waking up.
+const SLOW_START_NOTICE_MS = 3000;
+
+// Views mounted lazily: they render nothing until first visited, then stay mounted to keep their filters.
+type LazyView = Exclude<View, 'scrutins' | 'about'>;
+
 function getErrorMessage(error: unknown): string {
-  if (error instanceof Error && error.message.startsWith('HTTP ')) {
+  if (error instanceof TypeError || error instanceof RequestTimeoutError) {
+    return 'Le serveur n’a pas répondu à temps. Il est peut-être en cours de démarrage : réessayez dans un instant.';
+  }
+  if (error instanceof HttpError || (error instanceof Error && error.message.startsWith('HTTP '))) {
     return `Le serveur a répondu avec une erreur (${error.message.slice(5)}). Vérifiez que le backend et la base de données sont disponibles.`;
   }
   if (error instanceof Error && error.message) return error.message;
@@ -59,74 +103,154 @@ function getErrorMessage(error: unknown): string {
 }
 
 function App() {
-  const [view, setView] = useState<View>(readViewFromHash);
+  const [route, setRoute] = useState<RouteSnapshot>(readRouteSnapshot);
+  const view = viewOfRoute(route);
+  const dialogRoute = parseHash(route.hash).dialog;
   const [navOpen, setNavOpen] = useState(false);
   const [selectedSession, setSelectedSession] = useState('all');
   const [senatorGroupFilter, setSenatorGroupFilter] = useState('all');
   const [senatorStatusFilter, setSenatorStatusFilter] = useState<SenatorStatusFilter>('ACTIF');
-  const [activeDialog, setActiveDialog] = useState<ActiveDialog>(null);
+  // Dialogs opened in the app, by route hash, so that Back/Forward can show them again
+  // (including former senators, who are not in the initially loaded list).
+  const openedDialogs = useRef(new Map<string, ActiveDialog>());
+  const [formerSenators, setFormerSenators] = useState<FormerSenatorsState>({ kind: 'idle' });
+  // Hash of a dialog being closed through history.go(): hidden at once, gone after the popstate.
+  const [closingHash, setClosingHash] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [photoPreview, setPhotoPreview] = useState<{ src: string; name: string } | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [loadState, setLoadState] = useState<LoadState>({ kind: 'loading' });
-  const [statsVisited, setStatsVisited] = useState(() => readViewFromHash() === 'stats');
-  const [mapVisited, setMapVisited] = useState(() => readViewFromHash() === 'carte');
+  const [visitedViews, setVisitedViews] = useState<ReadonlySet<View>>(() => new Set([viewOfRoute(readRouteSnapshot())]));
 
-  useEffect(() => {
-    const syncView = () => setView(readViewFromHash());
-    window.addEventListener('hashchange', syncView);
-    return () => window.removeEventListener('hashchange', syncView);
+  const syncRoute = useCallback(() => {
+    const next = readRouteSnapshot();
+    setRoute(current => current.hash === next.hash && current.depth === next.depth && current.baseView === next.baseView
+      ? current
+      : next);
+    setClosingHash(null);
   }, []);
 
   useEffect(() => {
-    if (view === 'stats') setStatsVisited(true);
-    if (view === 'carte') setMapVisited(true);
+    // A shared dialog link opened directly gets a list entry under it, so Back closes the dialog
+    // instead of leaving the site. Idempotent: the pushed entry carries its depth in history.state.
+    const parsed = parseHash(window.location.hash);
+    if (parsed.dialog && !readDialogHistoryState(window.history.state).svDialogDepth) {
+      const dialogEntry = window.location.hash;
+      window.history.replaceState(null, '', `#${parsed.view}`);
+      const state: DialogHistoryState = { svDialogDepth: 1, svBaseView: parsed.view };
+      window.history.pushState(state, '', dialogEntry);
+    }
+    syncRoute();
+    window.addEventListener('hashchange', syncRoute);
+    window.addEventListener('popstate', syncRoute);
+    return () => {
+      window.removeEventListener('hashchange', syncRoute);
+      window.removeEventListener('popstate', syncRoute);
+    };
+  }, [syncRoute]);
+
+  // Only a change of view resets the page; opening or closing a dialog leaves the view as it is.
+  useEffect(() => {
+    setVisitedViews(visited => visited.has(view) ? visited : new Set(visited).add(view));
     setNavOpen(false);
     setSearchOpen(false);
-    setActiveDialog(null);
-    setPhotoPreview(null);
     window.scrollTo({ top: 0, behavior: preferredScrollBehavior() });
   }, [view]);
 
+  useEffect(() => { setPhotoPreview(null); }, [route.hash]);
+
+  // Opening a dialog pushes a history entry: Back closes it, or returns to the previous dialog.
+  const pushDialog = useCallback((hash: string, dialog: ActiveDialog) => {
+    openedDialogs.current.set(hash, dialog);
+    const current = readRouteSnapshot();
+    if (current.hash === hash) return;
+    const currentRoute = parseHash(current.hash);
+    const state: DialogHistoryState = currentRoute.dialog
+      ? { svDialogDepth: current.depth + 1, svBaseView: current.baseView ?? currentRoute.view }
+      : { svDialogDepth: 1, svBaseView: currentRoute.view };
+    window.history.pushState(state, '', hash);
+    syncRoute();
+  }, [syncRoute]);
+
+  // Closing goes back to the list entry the dialogs were opened from, without adding entries.
+  const closeDialog = useCallback(() => {
+    const current = readRouteSnapshot();
+    const currentRoute = parseHash(current.hash);
+    if (!currentRoute.dialog) return;
+    if (current.depth > 0) {
+      setClosingHash(current.hash);
+      window.history.go(-current.depth);
+    } else {
+      window.history.replaceState(null, '', `#${current.baseView ?? currentRoute.view}`);
+      syncRoute();
+    }
+  }, [syncRoute]);
+
   const openSearch = useCallback(() => setSearchOpen(true), []);
-  const closeDialog = useCallback(() => setActiveDialog(null), []);
-  const openScrutin = useCallback((scrutin: Scrutin) => setActiveDialog({ kind: 'scrutin', scrutin }), []);
-  const openSenator = useCallback((senator: Senator) => setActiveDialog({ kind: 'senator', senator }), []);
+  const dismissNotice = useCallback(() => setNotice(null), []);
+  const openScrutin = useCallback((scrutin: Scrutin) => pushDialog(scrutinHash(scrutin), { kind: 'scrutin', scrutin }), [pushDialog]);
+  const openSenator = useCallback((senator: Senator) => pushDialog(senatorHash(senator), { kind: 'senator', senator }), [pushDialog]);
   const openPhoto = useCallback((src: string, name: string) => setPhotoPreview({ src, name }), []);
 
   useEffect(() => {
     const controller = new AbortController();
     setLoadState({ kind: 'loading' });
+    const slowTimer = window.setTimeout(() => {
+      setLoadState(state => state.kind === 'loading' ? { kind: 'loading', slow: true } : state);
+    }, SLOW_START_NOTICE_MS);
 
     async function load() {
       try {
-        const status = await api.status(controller.signal);
-        if (status.status !== 'online' || !status.hasData) {
-          throw new Error('Le backend ne peut pas accéder aux données. Vérifiez sa connexion à la base de données.');
-        }
-
-        const [senators, scrutins, stats] = await Promise.all([
-          api.senators(controller.signal),
-          api.scrutins(controller.signal),
-          api.stats(controller.signal).catch(() => null),
-        ]);
+        const data = await loadInitialData(controller.signal);
         if (controller.signal.aborted) return;
-
-        const data = { senators, scrutins, stats };
-        setLoadState(senators.length === 0 && scrutins.length === 0
+        setLoadState(data.senators.length === 0 && data.scrutins.length === 0
           ? { kind: 'empty', data }
           : { kind: 'ready', data });
       } catch (error) {
         if (controller.signal.aborted) return;
         setLoadState({ kind: 'error', message: getErrorMessage(error) });
+      } finally {
+        window.clearTimeout(slowTimer);
       }
     }
 
     void load();
-    return () => controller.abort();
+    return () => {
+      window.clearTimeout(slowTimer);
+      controller.abort();
+    };
   }, [retryCount]);
 
+  const settledData = loadState.kind === 'ready' || loadState.kind === 'empty' ? loadState.data : null;
+  const resolution = resolveDialog(dialogRoute, settledData, formerSenators, openedDialogs.current);
+  const needsFormerSenators = resolution.status === 'pending' && settledData !== null && dialogRoute?.kind === 'senator';
+
+  // A senator link may point to a former senator: they are only in the ANCIEN list, fetched on demand.
+  useEffect(() => {
+    if (!needsFormerSenators) return;
+    const controller = new AbortController();
+    setFormerSenators({ kind: 'loading' });
+    api.senatorsByStatus('ANCIEN', controller.signal)
+      .then(senators => { if (!controller.signal.aborted) setFormerSenators({ kind: 'ready', senators }); })
+      .catch(() => { if (!controller.signal.aborted) setFormerSenators({ kind: 'error' }); });
+    return () => controller.abort();
+  }, [needsFormerSenators]);
+
+  // Unknown vote or senator: show the underlying view with a short notice instead of an error page.
+  const missingMessage = resolution.status === 'missing' ? resolution.message : null;
+  useEffect(() => {
+    if (!missingMessage) return;
+    setNotice(missingMessage);
+    // A failed former-senator list is fetched again for the next link.
+    setFormerSenators(state => state.kind === 'error' ? { kind: 'idle' } : state);
+    closeDialog();
+  }, [missingMessage, route.hash, closeDialog]);
+
+  const shownDialog = resolution.status === 'open' && route.hash !== closingHash ? resolution.dialog : null;
   const currentView = VIEWS.find(item => item.id === view) ?? VIEWS[0];
+  // Also true on the render that first shows a view, before the effect records the visit.
+  const isMounted = (id: LazyView) => view === id || visitedViews.has(id);
   const loadedData = loadState.kind === 'ready' || loadState.kind === 'empty' ? loadState.data : null;
   const sessions = loadedData ? listSessions(loadedData.scrutins) : [];
   const activeSession = selectedSession === 'all' || sessions.includes(selectedSession) ? selectedSession : 'all';
@@ -225,68 +349,97 @@ function App() {
             aria-hidden={view !== 'scrutins'}
             style={{ display: view === 'scrutins' ? undefined : 'none' }}
           >
-            <ScrutinsView
-              isActive={view === 'scrutins'}
-              scrutins={loadedData.scrutins}
-              stats={loadedData.stats}
-              selectedSession={activeSession}
-              onOpenScrutin={openScrutin}
-              onOpenSearch={openSearch}
-            />
+            <ErrorBoundary resetKey={view}>
+              <ScrutinsView
+                isActive={view === 'scrutins'}
+                scrutins={loadedData.scrutins}
+                stats={loadedData.stats}
+                selectedSession={activeSession}
+                onOpenScrutin={openScrutin}
+                onOpenSearch={openSearch}
+              />
+            </ErrorBoundary>
           </div>
           <div
             aria-hidden={view !== 'senateurs'}
             style={{ display: view === 'senateurs' ? undefined : 'none' }}
           >
-            <SenatorsView
-              senators={loadedData.senators}
-              stats={loadedData.stats}
-              groupFilter={senatorGroupFilter}
-              onGroupFilterChange={setSenatorGroupFilter}
-              statusFilter={senatorStatusFilter}
-              onStatusFilterChange={setSenatorStatusFilter}
-              onOpenSenator={openSenator}
-              onOpenPhoto={openPhoto}
-            />
+            {isMounted('senateurs') && (
+              <ErrorBoundary resetKey={view}>
+                <SenatorsView
+                  senators={loadedData.senators}
+                  stats={loadedData.stats}
+                  groupFilter={senatorGroupFilter}
+                  onGroupFilterChange={setSenatorGroupFilter}
+                  statusFilter={senatorStatusFilter}
+                  onStatusFilterChange={setSenatorStatusFilter}
+                  onOpenSenator={openSenator}
+                  onOpenPhoto={openPhoto}
+                />
+              </ErrorBoundary>
+            )}
           </div>
           <div
             aria-hidden={view !== 'groupes'}
             style={{ display: view === 'groupes' ? undefined : 'none' }}
           >
-            <GroupsView
-              senators={loadedData.senators}
-              stats={loadedData.stats}
-              onSelectGroup={code => {
-                setSenatorGroupFilter(code);
-                setSenatorStatusFilter('ACTIF');
-                window.location.hash = 'senateurs';
-              }}
-              onOpenSenator={openSenator}
-            />
+            {isMounted('groupes') && (
+              <ErrorBoundary resetKey={view}>
+                <GroupsView
+                  senators={loadedData.senators}
+                  stats={loadedData.stats}
+                  onSelectGroup={code => {
+                    setSenatorGroupFilter(code);
+                    setSenatorStatusFilter('ACTIF');
+                    window.location.hash = 'senateurs';
+                  }}
+                />
+              </ErrorBoundary>
+            )}
+          </div>
+          <div
+            aria-hidden={view !== 'independance'}
+            style={{ display: view === 'independance' ? undefined : 'none' }}
+          >
+            {isMounted('independance') && (
+              <ErrorBoundary resetKey={view}>
+                <IndependenceView
+                  senators={loadedData.senators}
+                  scrutins={loadedData.scrutins}
+                  stats={loadedData.stats}
+                  onOpenSenator={openSenator}
+                  onOpenScrutin={openScrutin}
+                />
+              </ErrorBoundary>
+            )}
           </div>
           <div
             aria-hidden={view !== 'carte'}
             style={{ display: view === 'carte' ? undefined : 'none' }}
           >
-            {mapVisited && (
-              <Suspense fallback={<MapLoading />}>
-                <MapView senators={loadedData.senators} stats={loadedData.stats} onOpenSenator={openSenator} />
-              </Suspense>
+            {isMounted('carte') && (
+              <ErrorBoundary resetKey={view}>
+                <Suspense fallback={<MapLoading />}>
+                  <MapView senators={loadedData.senators} stats={loadedData.stats} onOpenSenator={openSenator} />
+                </Suspense>
+              </ErrorBoundary>
             )}
           </div>
           <div
             aria-hidden={view !== 'stats'}
             style={{ display: view === 'stats' ? undefined : 'none' }}
           >
-            {statsVisited && (
-              <Suspense fallback={<StatsLoading />}>
-                <StatsView
-                  scrutins={loadedData.scrutins}
-                  stats={loadedData.stats}
-                  selectedSession={activeSession}
-                  onOpenScrutin={openScrutin}
-                />
-              </Suspense>
+            {isMounted('stats') && (
+              <ErrorBoundary resetKey={view}>
+                <Suspense fallback={<StatsLoading />}>
+                  <StatsView
+                    scrutins={loadedData.scrutins}
+                    stats={loadedData.stats}
+                    selectedSession={activeSession}
+                    onOpenScrutin={openScrutin}
+                  />
+                </Suspense>
+              </ErrorBoundary>
             )}
           </div>
         </>
@@ -301,6 +454,9 @@ function App() {
                 <div className="loading-state">
                   <div className="loading-spinner" />
                   <p>Chargement des données officielles du Sénat…</p>
+                  {loadState.slow && (
+                    <p className="loading-slow-notice">Le serveur démarre… cela peut prendre jusqu’à une minute.</p>
+                  )}
                 </div>
               </div>
             )}
@@ -334,7 +490,7 @@ function App() {
         </main>
       )}
 
-      {view === 'about' && <AboutView />}
+      {view === 'about' && <ErrorBoundary resetKey={view}><AboutView /></ErrorBoundary>}
 
       <footer className="site-footer">
         <div className="container footer-inner">
@@ -382,36 +538,86 @@ function App() {
         <div className="footer-bottom"><div className="container"><p>Sénat Votes · Transparence et suivi de l’activité parlementaire</p></div></div>
       </footer>
 
-      {activeDialog?.kind === 'scrutin' && loadedData && (
-        <ScrutinDetailDialog
-          key={`${activeDialog.scrutin.session}-${activeDialog.scrutin.number}`}
-          scrutin={activeDialog.scrutin}
-          senators={loadedData.senators}
-          stats={loadedData.stats}
-          onClose={closeDialog}
-          onOpenSenator={openSenator}
-          onOpenPhoto={openPhoto}
-        />
+      {/* Keyed boundaries: opening another scrutin/senator remounts the dialog and clears a caught error. */}
+      {shownDialog?.kind === 'scrutin' && loadedData && (
+        <ErrorBoundary
+          key={`scrutin-${shownDialog.scrutin.session}-${shownDialog.scrutin.number}`}
+          fallback={reload => <DialogErrorFallback onClose={closeDialog} onReload={reload} />}
+        >
+          <ScrutinDetailDialog
+            scrutin={shownDialog.scrutin}
+            senators={loadedData.senators}
+            stats={loadedData.stats}
+            onClose={closeDialog}
+            onOpenSenator={openSenator}
+            onOpenPhoto={openPhoto}
+          />
+        </ErrorBoundary>
       )}
-      {activeDialog?.kind === 'senator' && loadedData && (
-        <SenatorDetailDialog
-          key={activeDialog.senator.matricule}
-          senator={activeDialog.senator}
-          scrutins={loadedData.scrutins}
-          stats={loadedData.stats}
-          onClose={closeDialog}
-          onOpenScrutin={openScrutin}
-          onOpenPhoto={openPhoto}
-        />
+      {shownDialog?.kind === 'senator' && loadedData && (
+        <ErrorBoundary
+          key={`senator-${shownDialog.senator.matricule}`}
+          fallback={reload => <DialogErrorFallback onClose={closeDialog} onReload={reload} />}
+        >
+          <SenatorDetailDialog
+            senator={shownDialog.senator}
+            scrutins={loadedData.scrutins}
+            stats={loadedData.stats}
+            onClose={closeDialog}
+            onOpenScrutin={openScrutin}
+            onOpenPhoto={openPhoto}
+          />
+        </ErrorBoundary>
       )}
+      {notice && <RouteNotice message={notice} onDismiss={dismissNotice} />}
       {photoPreview && (
-        <PhotoPreviewDialog
-          src={photoPreview.src}
-          name={photoPreview.name}
-          onClose={() => setPhotoPreview(null)}
-        />
+        <ErrorBoundary
+          key={photoPreview.src}
+          fallback={reload => <DialogErrorFallback onClose={() => setPhotoPreview(null)} onReload={reload} />}
+        >
+          <PhotoPreviewDialog
+            src={photoPreview.src}
+            name={photoPreview.name}
+            onClose={() => setPhotoPreview(null)}
+          />
+        </ErrorBoundary>
       )}
     </>
+  );
+}
+
+function resolveDialog(
+  route: DialogRoute | null,
+  data: LoadedData | null,
+  former: FormerSenatorsState,
+  opened: ReadonlyMap<string, ActiveDialog>,
+): DialogResolution {
+  if (!route) return { status: 'none' };
+  const known = opened.get(dialogHash(route));
+  if (known) return { status: 'open', dialog: known };
+  if (!data) return { status: 'pending' };
+
+  if (route.kind === 'scrutin') {
+    const scrutin = route.session ? findScrutin(data.scrutins, route.session, route.number) : undefined;
+    return scrutin ? { status: 'open', dialog: { kind: 'scrutin', scrutin } } : { status: 'missing', message: NOTICE_SCRUTIN_MISSING };
+  }
+
+  if (!route.matricule) return { status: 'missing', message: NOTICE_SENATOR_MISSING };
+  const sitting = data.senators.find(senator => senator.matricule === route.matricule);
+  if (sitting) return { status: 'open', dialog: { kind: 'senator', senator: sitting } };
+  if (former.kind === 'error') return { status: 'missing', message: NOTICE_SENATOR_UNAVAILABLE };
+  if (former.kind !== 'ready') return { status: 'pending' };
+  const formerSenator = former.senators.find(senator => senator.matricule === route.matricule);
+  return formerSenator
+    ? { status: 'open', dialog: { kind: 'senator', senator: formerSenator } }
+    : { status: 'missing', message: NOTICE_SENATOR_MISSING };
+}
+
+function DialogErrorFallback({ onClose, onReload }: { onClose: () => void; onReload: () => void }) {
+  return (
+    <AccessibleDialog label="Une erreur est survenue" onClose={onClose}>
+      <ErrorFallback onReload={onReload} />
+    </AccessibleDialog>
   );
 }
 

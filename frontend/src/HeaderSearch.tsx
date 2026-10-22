@@ -169,7 +169,7 @@ function SearchSenatorAvatar({ senator, color }: { senator: Senator; color: stri
   return (
     <span className="search-result-avatar" style={{ background: `${color}20`, color }}>
       {senator.avatar && !imageFailed
-        ? <img src={senator.avatar} alt="" onError={() => setImageFailed(true)} />
+        ? <img src={senator.avatar} alt="" loading="lazy" decoding="async" onError={() => setImageFailed(true)} />
         : <span>{getInitials(senator.name)}</span>}
     </span>
   );

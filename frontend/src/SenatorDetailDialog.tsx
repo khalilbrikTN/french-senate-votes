@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import AccessibleDialog from './components/AccessibleDialog';
 import SenatorVoteChart from './components/SenatorVoteChart';
 import SenatorCompare from './components/SenatorCompare';
+import ShareButton from './components/ShareButton';
 import SenatorLoyalty from './components/SenatorLoyalty';
 import { api } from './api/endpoints';
 import { SENATE_GROUP_CODE_ALIASES } from './data/politicalGroups';
@@ -11,6 +12,7 @@ import { getGroupColor, getGroupName } from './lib/groups';
 import { safeExternalUrl } from './lib/links';
 import { formerSenatorLabel, formerTag, isFormerSenator, recordedNonVoterCount, senatorGroupLabel, senatorTitle, socialLinks, voteNotes } from './lib/senators';
 import { findScrutin } from './lib/scrutins';
+import { senatorHash } from './lib/routes';
 import type { GroupMembership, HistoryItem, Senator, SenatorVotesPage, Scrutin, Stats } from './types';
 
 interface SenatorDetailDialogProps {
@@ -126,7 +128,7 @@ export default function SenatorDetailDialog({ senator, scrutins, stats, onClose,
               style={{ borderColor: `${color}66`, color }}
               onClick={() => onOpenPhoto(senator.avatar!, senator.name)}
             >
-              <img src={senator.avatar} alt="" onError={() => setImageFailed(true)} />
+              <img src={senator.avatar} alt="" decoding="async" onError={() => setImageFailed(true)} />
             </button>
           ) : (
             <div className="senator-profile-avatar" style={{ borderColor: `${color}66`, color }}>
@@ -157,9 +159,9 @@ export default function SenatorDetailDialog({ senator, scrutins, stats, onClose,
               </span>
             </div>
             {officialUrl ? (
-              <div className="senator-official-link-row"><a href={officialUrl} target="_blank" rel="noopener noreferrer" className="modal-link senator-official-link" aria-label="Consulter la fiche officielle sur senat.fr" title="Fiche officielle sur senat.fr"><ExternalLinkIcon />Fiche Sénat</a></div>
+              <div className="senator-official-link-row"><a href={officialUrl} target="_blank" rel="noopener noreferrer" className="modal-link senator-official-link" aria-label="Consulter la fiche officielle sur senat.fr" title="Fiche officielle sur senat.fr"><ExternalLinkIcon />Fiche Sénat</a><ShareButton hash={senatorHash(senator)} title={senator.name} className="modal-link senator-official-link" /></div>
             ) : (
-              <div className="senator-official-link-row"><span className="modal-link senator-official-link is-disabled" aria-disabled="true" title="Pas de fiche officielle sur senat.fr">Fiche indisponible</span></div>
+              <div className="senator-official-link-row"><span className="modal-link senator-official-link is-disabled" aria-disabled="true" title="Pas de fiche officielle sur senat.fr">Fiche indisponible</span><ShareButton hash={senatorHash(senator)} title={senator.name} className="modal-link senator-official-link" /></div>
             )}
             {socialLinks(senator).length > 0 && (
               <div className="senator-social-links" aria-label="Réseaux sociaux">

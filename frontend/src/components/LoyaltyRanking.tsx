@@ -27,16 +27,20 @@ interface LoyaltyRankingProps {
   onOpenSenator?: (senator: Senator) => void;
   scrutins?: Scrutin[];
   onOpenScrutin?: (scrutin: Scrutin) => void;
+  // h1 when the ranking is the whole page (Indépendance view), h2 inside another page.
+  titleAs?: 'h1' | 'h2';
 }
 
-export default function LoyaltyRanking({ senators, stats, onOpenSenator, scrutins = [], onOpenScrutin = () => undefined }: LoyaltyRankingProps) {
+export default function LoyaltyRanking({
+  senators, stats, onOpenSenator, scrutins = [], onOpenScrutin = () => undefined, titleAs: Title = 'h2',
+}: LoyaltyRankingProps) {
   const [state, setState] = useState<OverviewState>({ kind: 'loading' });
   const [retry, setRetry] = useState(0);
   const [group, setGroup] = useState('all');
   const [minVotes, setMinVotes] = useState(MIN_VOTES_CHOICES[0]);
   const [visible, setVisible] = useState(RANKING_PAGE_SIZE);
   const [localSenator, setLocalSenator] = useState<Senator | null>(null);
-  // The Groups view stays mounted while hidden: fetch the ranking once it is first on screen.
+  // Hidden views stay mounted: fetch the ranking once it is first on screen.
   const sectionRef = useRef<HTMLElement>(null);
   const [seen, setSeen] = useState(() => typeof IntersectionObserver === 'undefined');
 
@@ -91,7 +95,7 @@ export default function LoyaltyRanking({ senators, stats, onOpenSenator, scrutin
       <div className="loyalty-ranking-header">
         <div>
           <p className="section-eyebrow">Discipline de vote</p>
-          <h2 className="loyalty-ranking-title" id="loyalty-ranking-title">Les sénateurs les plus indépendants</h2>
+          <Title className="loyalty-ranking-title" id="loyalty-ranking-title">Les sénateurs les plus indépendants</Title>
           <p className="loyalty-ranking-lead">
             Sénateurs en exercice classés du moins au plus aligné sur la position majoritaire de leur groupe.
           </p>
@@ -156,7 +160,7 @@ export default function LoyaltyRanking({ senators, stats, onOpenSenator, scrutin
                   <>
                     <span className="loyalty-rank">{index + 1}</span>
                     <span className="loyalty-avatar" style={{ borderColor: `${color}66`, color }}>
-                      {senator?.avatar ? <img src={senator.avatar} alt="" loading="lazy" /> : getInitials(entry.name)}
+                      {senator?.avatar ? <img src={senator.avatar} alt="" loading="lazy" decoding="async" /> : getInitials(entry.name)}
                     </span>
                     <span className="loyalty-row-main">
                       <span className="loyalty-row-name">{entry.name}</span>

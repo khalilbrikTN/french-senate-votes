@@ -4,7 +4,7 @@ export type VoteResult = 'adopté' | 'rejeté';
 export type Position = 'pour' | 'contre' | 'abstention' | 'non_votant';
 export type SenateStatus = 'ACTIF' | 'ANCIEN';
 export type SenatorStatusFilter = SenateStatus | 'all';
-export type View = 'scrutins' | 'senateurs' | 'groupes' | 'carte' | 'stats' | 'about';
+export type View = 'scrutins' | 'senateurs' | 'groupes' | 'independance' | 'carte' | 'stats' | 'about';
 
 export interface SenatorStats {
   pour: number;

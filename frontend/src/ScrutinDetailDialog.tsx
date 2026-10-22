@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import AccessibleDialog from './components/AccessibleDialog';
 import FilterDropdown from './components/FilterDropdown';
+import ShareButton from './components/ShareButton';
 import { api } from './api/endpoints';
 import { getGroupColor, getGroupName } from './lib/groups';
 import { formatDate, formatSessionRange, getInitials } from './lib/format';
 import { findVoterSenator, voteNotes } from './lib/senators';
 import { safeExternalUrl } from './lib/links';
+import { scrutinHash } from './lib/routes';
 import type { Position, Scrutin, ScrutinDetail, Senator, Stats, Voter } from './types';
 
 interface ScrutinDetailDialogProps {
@@ -86,6 +88,9 @@ export default function ScrutinDetailDialog({ scrutin, senators, stats, onClose,
             <div className="modal-meta-item"><CalendarIcon />{formatDate(scrutin.date) || scrutin.date || '—'}</div>
             <div className="modal-meta-item"><SessionIcon />Session {formatSessionRange(scrutin.session) || scrutin.session || '—'}</div>
             <div className="modal-meta-item"><PeopleIcon />{displayedTotal.toLocaleString('fr-FR')} votants</div>
+          </div>
+          <div className="modal-share-row">
+            <ShareButton hash={scrutinHash(scrutin)} title={`Scrutin n°${scrutin.number} : ${scrutin.title || 'Sénat'}`} />
           </div>
         </div>
 
@@ -356,7 +361,7 @@ function VoterRow({
         }}
       >
         {senator?.avatar && !imageFailed ? (
-          <img src={senator.avatar} alt="" className="voter-photo-img" onError={() => setImageFailed(true)} />
+          <img src={senator.avatar} alt="" className="voter-photo-img" loading="lazy" decoding="async" onError={() => setImageFailed(true)} />
         ) : getInitials(voter.name)}
       </span>
       <span className="senator-info">

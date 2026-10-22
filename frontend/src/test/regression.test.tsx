@@ -1,6 +1,7 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { HttpError, RequestTimeoutError } from '../api/client';
 import App from '../App';
 import ScrutinDetailDialog from '../ScrutinDetailDialog';
 import ScrutinsView from '../ScrutinsView';
@@ -152,6 +153,11 @@ describe('React UI regression states and interactions', () => {
     await user.click(screen.getByRole('link', { name: 'Groupes' }));
     await waitFor(() => expect(window.location.hash).toBe('#groupes'));
     expect(screen.getByRole('link', { name: 'Groupes' }).getAttribute('aria-current')).toBe('page');
+    expect(screen.getByRole('link', { name: /Les sénateurs les plus indépendants/ }).getAttribute('href')).toBe('#independance');
+
+    await user.click(screen.getByRole('link', { name: 'Indépendance' }));
+    await waitFor(() => expect(window.location.hash).toBe('#independance'));
+    expect(screen.getByRole('heading', { level: 1, name: 'Les sénateurs les plus indépendants' })).toBeTruthy();
 
     unmount();
     window.location.hash = '#stats';
@@ -175,6 +181,94 @@ describe('React UI regression states and interactions', () => {
     await user.click(screen.getByRole('button', { name: 'Réessayer' }));
     expect(await screen.findAllByText(firstScrutin.title)).not.toHaveLength(0);
     expect(apiMock.status).toHaveBeenCalledTimes(2);
+  });
+
+  describe('backend cold start', () => {
+    beforeEach(() => { vi.useFakeTimers(); });
+    afterEach(() => { vi.useRealTimers(); });
+
+    const advance = (ms: number) => act(async () => { await vi.advanceTimersByTimeAsync(ms); });
+
+    it('keeps retrying a waking backend, explains the delay, then loads', async () => {
+      // First attempt hangs until its own timeout, the second fails to connect, the third succeeds.
+      apiMock.status
+        .mockImplementationOnce((_signal?: AbortSignal, timeoutMs = 1500) => new Promise((_, reject) => {
+          setTimeout(() => reject(new RequestTimeoutError(timeoutMs)), timeoutMs);
+        }))
+        .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+        .mockResolvedValue(online);
+      render(<App />);
+
+      await advance(1000);
+      expect(screen.queryByText(/Le serveur démarre/)).toBeNull();
+      await advance(3000);
+      expect(screen.getByText(/Le serveur démarre… cela peut prendre jusqu’à une minute/)).toBeTruthy();
+      expect(screen.queryByRole('alert')).toBeNull();
+
+      await advance(30_000);
+      expect(screen.getAllByText(firstScrutin.title)).not.toHaveLength(0);
+      expect(apiMock.status).toHaveBeenCalledTimes(3);
+      // Waiting longer per attempt than the old 1.5 s timeout.
+      expect(apiMock.status.mock.calls[0][1]).toBeGreaterThanOrEqual(15_000);
+      expect(screen.queryByText(/Le serveur démarre/)).toBeNull();
+    });
+
+    it('gives up and shows the error only once the overall budget is spent', async () => {
+      apiMock.status.mockRejectedValue(new TypeError('Failed to fetch'));
+      render(<App />);
+
+      await advance(80_000);
+      expect(screen.queryByRole('alert')).toBeNull();
+      expect(screen.getByText(/Le serveur démarre/)).toBeTruthy();
+      await advance(15_000);
+      expect(screen.getByRole('alert')).toBeTruthy();
+      expect(screen.getByRole('heading', { name: 'Les données ne sont pas disponibles' })).toBeTruthy();
+      expect(apiMock.status.mock.calls.length).toBeGreaterThan(3);
+    });
+
+    it('does not retry client errors', async () => {
+      apiMock.status.mockRejectedValue(new HttpError(404));
+      render(<App />);
+      await advance(0);
+      expect(screen.getByRole('alert')).toBeTruthy();
+      expect(screen.getByText(/erreur \(404\)/)).toBeTruthy();
+      expect(apiMock.status).toHaveBeenCalledTimes(1);
+    });
+
+    it('stops retrying once the app is unmounted', async () => {
+      apiMock.status.mockRejectedValue(new TypeError('Failed to fetch'));
+      const { unmount } = render(<App />);
+      await advance(2000);
+      const calls = apiMock.status.mock.calls.length;
+      expect(apiMock.status.mock.calls[0][0]?.aborted).toBe(false);
+      unmount();
+      expect(apiMock.status.mock.calls[0][0]?.aborted).toBe(true);
+      await advance(60_000);
+      expect(apiMock.status).toHaveBeenCalledTimes(calls);
+    });
+  });
+
+  it('mounts the heavy views only once visited and keeps them mounted afterwards', async () => {
+    const user = userEvent.setup();
+    const pictured = { ...senator, avatar: 'https://www.senat.fr/photo.jpg' };
+    apiMock.senators.mockResolvedValue([pictured]);
+    const { container } = render(<App />);
+    await screen.findAllByText(firstScrutin.title);
+    expect(container.querySelector('.senator-photo-img')).toBeNull();
+    expect(apiMock.groupStats).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('link', { name: 'Sénateurs' }));
+    const photo = await waitFor(() => {
+      const img = container.querySelector<HTMLImageElement>('.senator-photo-img');
+      expect(img).not.toBeNull();
+      return img!;
+    });
+    expect(photo.getAttribute('loading')).toBe('lazy');
+    expect(photo.getAttribute('decoding')).toBe('async');
+
+    await user.click(screen.getByRole('link', { name: 'Scrutins' }));
+    await waitFor(() => expect(window.location.hash).toBe('#scrutins'));
+    expect(container.querySelector('.senator-photo-img')).toBe(photo);
   });
 
   it('supports keyboard search, reports results, closes on Escape, and restores focus', async () => {

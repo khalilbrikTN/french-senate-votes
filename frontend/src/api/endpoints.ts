@@ -4,12 +4,12 @@ import type {
 } from '../types';
 
 export const api = {
-  status: (signal?: AbortSignal) => fetchJSON<ApiStatus>('/api/status', 1500, signal),
-  senators: (signal?: AbortSignal) => fetchJSON<Senator[]>('/api/senateurs', 4000, signal),
+  status: (signal?: AbortSignal, timeoutMs = 1500) => fetchJSON<ApiStatus>('/api/status', timeoutMs, signal),
+  senators: (signal?: AbortSignal, timeoutMs = 4000) => fetchJSON<Senator[]>('/api/senateurs', timeoutMs, signal),
   senatorsByStatus: (status: SenateStatus, signal?: AbortSignal) =>
     fetchJSON<Senator[]>(`/api/senateurs?status=${status}`, 20000, signal),
-  scrutins: (signal?: AbortSignal) => fetchJSON<Scrutin[]>('/api/scrutins', 4000, signal),
-  stats: (signal?: AbortSignal) => fetchJSON<Stats>('/api/stats', 4000, signal),
+  scrutins: (signal?: AbortSignal, timeoutMs = 4000) => fetchJSON<Scrutin[]>('/api/scrutins', timeoutMs, signal),
+  stats: (signal?: AbortSignal, timeoutMs = 4000) => fetchJSON<Stats>('/api/stats', timeoutMs, signal),
   groupStats: (signal?: AbortSignal) => fetchJSON<GroupStats>('/api/stats/groups', 15000, signal),
   themeStats: (signal?: AbortSignal) => fetchJSON<ThemeStats>('/api/stats/themes', 15000, signal),
   senatorVotes: (matricule: string, offset: number, limit: number, signal?: AbortSignal) =>
