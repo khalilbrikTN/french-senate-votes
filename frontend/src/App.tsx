@@ -3,6 +3,7 @@ import { HttpError, RequestTimeoutError } from './api/client';
 import { api } from './api/endpoints';
 import { loadInitialData } from './api/initialLoad';
 import AboutView from './AboutView';
+import LegalView from './LegalView';
 import developerPhoto from './assets/developer.jpg';
 import AccessibleDialog from './components/AccessibleDialog';
 import ErrorBoundary, { ErrorFallback } from './components/ErrorBoundary';
@@ -89,7 +90,7 @@ const NOTICE_SENATOR_UNAVAILABLE = 'Cette fiche n’a pas pu être chargée. Ré
 const SLOW_START_NOTICE_MS = 3000;
 
 // Views mounted lazily: they render nothing until first visited, then stay mounted to keep their filters.
-type LazyView = Exclude<View, 'scrutins' | 'about'>;
+type LazyView = Exclude<View, 'scrutins' | 'about' | 'mentions-legales'>;
 
 function getErrorMessage(error: unknown): string {
   if (error instanceof TypeError || error instanceof RequestTimeoutError) {
@@ -443,7 +444,7 @@ function App() {
             )}
           </div>
         </>
-      ) : view === 'about' ? null : (
+      ) : view === 'about' || view === 'mentions-legales' ? null : (
         <main className="main-content view-panel react-shell-main">
           <div className="container react-shell-content">
             <p className="section-eyebrow">Regard Sénat</p>
@@ -491,6 +492,7 @@ function App() {
       )}
 
       {view === 'about' && <ErrorBoundary resetKey={view}><AboutView /></ErrorBoundary>}
+      {view === 'mentions-legales' && <ErrorBoundary resetKey={view}><LegalView /></ErrorBoundary>}
 
       <footer className="site-footer">
         <div className="container footer-inner">
@@ -500,6 +502,7 @@ function App() {
             <nav className="footer-links footer-source-links" aria-label="Sources des données">
               <a href="https://www.senat.fr/scrutin-public/scr2026.html" target="_blank" rel="noopener noreferrer">Source officielle des scrutins</a>
               <a href="https://data.senat.fr" target="_blank" rel="noopener noreferrer">data.senat.fr</a>
+              <a href="#mentions-legales">Mentions légales et confidentialité</a>
             </nav>
           </div>
           <section className="footer-developer" aria-label="Développeur du site">

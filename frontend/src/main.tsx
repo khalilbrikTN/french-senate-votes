@@ -5,6 +5,9 @@ import './design-tokens.css';
 import './react-shell.css';
 import App from './App';
 import ErrorBoundary from './components/ErrorBoundary';
+import { startAnalytics } from './lib/analytics';
+
+startAnalytics();
 
 const rootElement = document.getElementById('root');
 

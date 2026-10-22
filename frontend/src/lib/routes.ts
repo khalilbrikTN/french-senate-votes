@@ -3,7 +3,7 @@ import type { Scrutin, Senator, View } from '../types';
 // Hash routes. Views: #scrutins, #senateurs, … Shareable dialogs:
 //   #scrutin/<session>/<number>   e.g. #scrutin/2024/17   (opens over the Scrutins view)
 //   #senateur/<matricule>         e.g. #senateur/19123L   (opens over the Sénateurs view)
-export const VIEW_IDS: readonly View[] = ['scrutins', 'senateurs', 'groupes', 'independance', 'carte', 'stats', 'about'];
+export const VIEW_IDS: readonly View[] = ['scrutins', 'senateurs', 'groupes', 'independance', 'carte', 'stats', 'about', 'mentions-legales'];
 
 export type DialogRoute =
   | { kind: 'scrutin'; session: string; number: number }

@@ -1,0 +1,28 @@
+/* Mentions légales et confidentialité (LegalView). */
+#view-mentions-legales.main-content {
+  padding-top: calc(var(--header-h) + var(--sv-space-8, 32px));
+}
+.legal-container { max-width: 760px; }
+.legal-title {
+  margin: var(--sv-space-1, 4px) 0 var(--sv-space-8, 32px);
+  font-family: var(--font-display);
+  font-size: var(--sv-type-heading-lg, 28px);
+  line-height: var(--sv-leading-tight, 1.2);
+  color: var(--color-text-primary);
+}
+.legal-view section { margin-bottom: var(--sv-space-8, 32px); }
+.legal-view h2 {
+  margin: 0 0 var(--sv-space-3, 12px);
+  font-size: var(--sv-type-heading-sm, 18px);
+  color: var(--color-text-primary);
+}
+.legal-view p,
+.legal-list li {
+  color: var(--color-text-secondary);
+  font-size: var(--sv-type-body-sm, 15px);
+  line-height: var(--sv-leading-body, 1.65);
+}
+.legal-view p { margin: 0 0 var(--sv-space-3, 12px); }
+.legal-view a { color: var(--sv-color-action-primary-strong, #b1b1f9); text-decoration: underline; text-underline-offset: 3px; }
+.legal-list { margin: 0 0 var(--sv-space-3, 12px); padding-left: 1.2em; display: grid; gap: var(--sv-space-2, 8px); }
+.legal-list strong { color: var(--color-text-primary); }
