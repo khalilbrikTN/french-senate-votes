@@ -2,17 +2,14 @@ import { getGroupColor, getGroupLeader, getGroupSeats, getGroupName, getTotalSea
 import { GROUP_CODES, POLITICAL_GROUPS } from './data/politicalGroups';
 import type { Senator, Stats } from './types';
 import PoliticalGroupBadge from './components/PoliticalGroupBadge';
-import LoyaltyRanking from './components/LoyaltyRanking';
 
 interface GroupsViewProps {
   senators: Senator[];
   stats: Stats | null;
   onSelectGroup: (code: string) => void;
-  // Opens the senator panel from the loyalty ranking (App's openSenator).
-  onOpenSenator?: (senator: Senator) => void;
 }
 
-export default function GroupsView({ senators, stats, onSelectGroup, onOpenSenator }: GroupsViewProps) {
+export default function GroupsView({ senators, stats, onSelectGroup }: GroupsViewProps) {
   const totalSeats = getTotalSeats(stats);
 
   return (
@@ -74,7 +71,14 @@ export default function GroupsView({ senators, stats, onSelectGroup, onOpenSenat
             );
           })}
         </div>
-        <LoyaltyRanking senators={senators} stats={stats} onOpenSenator={onOpenSenator} />
+        <a className="groups-independence-link" href="#independance">
+          <span>
+            <span className="section-eyebrow">Discipline de vote</span>
+            <strong>Les sénateurs les plus indépendants</strong>
+            <span>Classement des sénateurs selon leur loyauté envers la position de leur groupe.</span>
+          </span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><polyline points="9 18 15 12 9 6" /></svg>
+        </a>
       </div>
     </main>
   );

@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { CONFIG } from './config';
 import { readChartTheme } from './lib/chartTheme';
 import { formatSessionRange } from './lib/format';
+import { useIdleWhenNearViewport } from './lib/deferred';
 import { preferredScrollBehavior } from './lib/motion';
 import { filterScrutins, getSessionScrutins } from './lib/scrutins';
 import type { ResultFilter, ScrutinSort } from './lib/scrutins';
@@ -14,6 +15,7 @@ import SectionHeader from './components/SectionHeader';
 import './themes.css';
 
 // The hemicycle carries the chart library: load it separately so the landing page appears first.
+// Its import starts only once the page has loaded and the browser is idle (see below).
 const Hemicycle = lazy(() => import('./stats/Hemicycle'));
 
 interface ScrutinsViewProps {
@@ -24,6 +26,18 @@ interface ScrutinsViewProps {
   onOpenScrutin: (scrutin: Scrutin) => void;
   onOpenSearch: () => void;
 }
+
+// Same box before the import starts and while it loads, so the hero does not shift.
+// Same card frame and title as the loaded hemicycle, so the card reads as there from the start.
+const hemicyclePlaceholder = (
+  <div className="stats-chart-card scrutins-hemicycle-loading" aria-busy="true">
+    <div className="stats-chart-title">
+      <span>Composition du Sénat</span>
+      <span className="scrutins-hemicycle-loading-aside">Sénateurs en exercice</span>
+    </div>
+    <div className="loading-state"><div className="loading-spinner" /><p>Chargement de la composition du Sénat…</p></div>
+  </div>
+);
 
 const RESULT_FILTERS: Array<{ id: ResultFilter; label: string }> = [
   { id: 'all', label: 'Tous' },
@@ -58,6 +72,7 @@ export default function ScrutinsView({ isActive = true, scrutins, stats, selecte
   ], [scrutins, sessionScrutins]);
   const visibleScrutins = filteredScrutins.slice(0, visibleCount);
   const chartTheme = useMemo(() => readChartTheme(), []);
+  const [hemicycleRef, showHemicycle] = useIdleWhenNearViewport<HTMLDivElement>();
   const sessionLabel = selectedSession === 'all'
     ? 'Toutes les sessions'
     : `Session ${formatSessionRange(selectedSession)}`;
@@ -94,14 +109,12 @@ export default function ScrutinsView({ isActive = true, scrutins, stats, selecte
             </div>
           </div>
 
-          <div className="scrutins-hemicycle">
-            <Suspense fallback={(
-              <div className="scrutins-hemicycle-loading" aria-busy="true">
-                <div className="loading-state"><div className="loading-spinner" /><p>Chargement de la composition du Sénat…</p></div>
-              </div>
-            )}>
-              <Hemicycle stats={stats} theme={chartTheme} />
-            </Suspense>
+          <div className="scrutins-hemicycle" ref={hemicycleRef}>
+            {showHemicycle ? (
+              <Suspense fallback={hemicyclePlaceholder}>
+                <Hemicycle stats={stats} theme={chartTheme} />
+              </Suspense>
+            ) : hemicyclePlaceholder}
           </div>
         </div>
       </section>

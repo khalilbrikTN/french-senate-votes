@@ -1,3 +1,13 @@
+/* Self-hosted fonts (latin subset, font-display: swap). Only the weights the CSS uses:
+   Inter 400/500/600/700/800 (650 and 750 resolve to 700 and 800, as with Google Fonts),
+   Playfair Display 700. */
+@import '@fontsource/inter/latin-400.css';
+@import '@fontsource/inter/latin-500.css';
+@import '@fontsource/inter/latin-600.css';
+@import '@fontsource/inter/latin-700.css';
+@import '@fontsource/inter/latin-800.css';
+@import '@fontsource/playfair-display/latin-700.css';
+
 /* ============================================================
    SÉNAT VOTES — Design System & Global Styles
    ============================================================ */
@@ -1426,6 +1436,26 @@ img { max-width: 100%; }
 /* ============================================================
    RESPONSIVE
    ============================================================ */
+/* The seven navigation links need ~1150px next to the logo, search and session
+   select: below that they go in the hamburger menu (same dropdown as on phones). */
+@media (max-width: 1149px) {
+  .nav-links { display: none; }
+  .nav-links.is-searching { display: none; }
+  .nav-links.open {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: var(--header-h);
+    left: 0; right: 0;
+    background: var(--color-bg-2);
+    border-bottom: 1px solid var(--color-border);
+    padding: 12px 24px 16px;
+    gap: 4px;
+    z-index: 900;
+  }
+  .header-actions { margin-left: auto; }
+  .hamburger { display: flex; }
+}
 @media (max-width: 768px) {
   .nav-links { display: none; }
   .nav-links.open {
@@ -2920,14 +2950,24 @@ img { max-width: 100%; }
 
 .scrutins-hemicycle .stats-viz-card { height: 100%; }
 
+/* Placeholder until the hemicycle chart loads: about the height of the loaded card
+   (506-531px in two columns, 484-553px stacked), so the hero barely moves when it appears. */
 .scrutins-hemicycle-loading {
-  display: grid;
-  min-height: 420px;
-  place-items: center;
-  border: var(--sv-border-card, 1px solid var(--color-border));
-  border-radius: var(--sv-card-radius-large, var(--radius-xl));
-  background: var(--sv-color-surface-card, var(--color-bg-card));
+  display: flex;
+  flex-direction: column;
+  min-height: 515px;
 }
+.scrutins-hemicycle-loading .stats-chart-title {
+  flex-wrap: wrap;
+  gap: var(--sv-space-1, 4px) var(--sv-space-3, 12px);
+  margin-bottom: var(--sv-space-3, 12px);
+}
+.scrutins-hemicycle-loading-aside {
+  font-size: var(--sv-type-caption, 12px);
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+.scrutins-hemicycle-loading .loading-state { flex: 1; display: grid; place-content: center; }
 
 @keyframes sv-rise-in {
   from { opacity: 0; transform: translateY(12px); }
@@ -3157,9 +3197,16 @@ img { max-width: 100%; }
     gap: var(--sv-space-8, 32px);
   }
 
+  /* Stacked, wider card: the legend fits in fewer rows but the chart is larger. */
+  .scrutins-hemicycle-loading { min-height: 545px; }
+
   .hero-content.scrutin-hero-copy { max-width: 680px; }
   .scrutin-hero-copy { --sv-type-display-hero: clamp(42px, 9vw, 64px); }
   .scrutins-overview { max-width: 680px; }
+}
+
+@media (max-width: 500px) {
+  .scrutins-hemicycle-loading { min-height: 500px; }
 }
 
 @media (max-width: 760px) {

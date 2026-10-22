@@ -54,7 +54,10 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=list(settings.cors_origins),
     allow_methods=["GET"],
-    allow_headers=["Content-Type"],
+    # The browser cache revalidates cross-origin responses with If-None-Match on its own
+    # (no preflight needed). Allowing/exposing the headers also lets page code do it.
+    allow_headers=["Content-Type", "If-None-Match"],
+    expose_headers=["ETag"],
 )
 # Compress JSON (and the frontend files) for clients that accept gzip. The cached
 # /api/senateurs and /api/scrutins bodies are already gzipped and pass through.
@@ -87,6 +90,12 @@ if REACT_ASSETS.is_dir():
 # assets on each load so the browser does not keep an old copy after an edit.
 FRONTEND_FILES = {"app.js": "text/javascript", "style.css": "text/css"}
 NO_CACHE = {"Cache-Control": "no-cache"}
+# Files Vite copies from frontend/public to the root of the build (icons, share image).
+REACT_ROOT_FILES = {
+    "favicon.svg": "image/svg+xml",
+    "apple-touch-icon.png": "image/png",
+    "og-image.png": "image/png",
+}
 
 
 @app.get("/", include_in_schema=False)
@@ -104,6 +113,9 @@ def legacy_index():
 
 @app.get("/{filename}", include_in_schema=False)
 def frontend_file(filename: str):
+    if filename in REACT_ROOT_FILES and (REACT_DIST / filename).is_file():
+        return FileResponse(REACT_DIST / filename, media_type=REACT_ROOT_FILES[filename],
+                            headers={"Cache-Control": "public, max-age=86400"})
     if filename not in FRONTEND_FILES:
         return JSONResponse(status_code=404, content={"detail": "Not found"})
     if filename == "app.js":
