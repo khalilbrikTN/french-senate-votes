@@ -1,7 +1,14 @@
 /* Carte des départements (MapView, loaded with the view). */
 #view-carte {
   --map-empty: rgba(255, 255, 255, 0.05);
+  /* Ties: a neutral slate, distinct from the non-inscrits grey (#828282). */
+  --map-tie: #59617a;
   --map-border: var(--color-bg-card);
+}
+
+/* Clear the fixed navigation, like the other content-only views (legacy.css). */
+#view-carte.main-content {
+  padding-top: calc(var(--header-h) + var(--sv-space-8, 32px));
 }
 
 .map-intro {
@@ -270,9 +277,9 @@
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
 }
 
-/* Legend key for ties: neutral stripes (the map uses the tied groups' own colours). */
+/* Legend key for ties: the same neutral fill as on the map. */
 .map-swatch--tie {
-  background: repeating-linear-gradient(45deg, var(--color-text-secondary) 0 2px, var(--color-bg-2) 2px 4px);
+  background: var(--map-tie);
 }
 
 .map-legend {

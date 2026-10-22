@@ -9,6 +9,7 @@ import AdoptionChart from './stats/AdoptionChart';
 import GroupCharts, { type GroupStatsState } from './stats/GroupCharts';
 import Hemicycle from './stats/Hemicycle';
 import { ClosestVotes, MarginChart } from './stats/MarginChart';
+import ThemeCharts from './stats/ThemesChart';
 import type { Scrutin, Stats } from './types';
 import './stats.css';
 
@@ -90,6 +91,8 @@ export default function StatsView({ scrutins, stats, selectedSession, onOpenScru
           <MarginChart scrutins={sessionScrutins} sessionLabel={sessionLabel} theme={theme} />
 
           <GroupCharts state={groupStats} selectedSession={selectedSession} stats={stats} theme={theme} onRetry={retryGroups} />
+
+          <ThemeCharts scrutins={sessionScrutins} selectedSession={selectedSession} sessionLabel={sessionLabel} stats={stats} theme={theme} />
         </div>
       </div>
     </main>

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { use as registerECharts, init, type EChartsType } from 'echarts/core';
 import { BarChart, HeatmapChart, LineChart, ScatterChart } from 'echarts/charts';
-import { GridComponent, MarkAreaComponent, TooltipComponent } from 'echarts/components';
+import { GridComponent, MarkAreaComponent, TooltipComponent, VisualMapComponent } from 'echarts/components';
 import { SVGRenderer } from 'echarts/renderers';
 import type { EChartsCoreOption } from 'echarts/core';
 import { prefersReducedMotion } from '../lib/motion';
@@ -10,7 +10,7 @@ import { prefersReducedMotion } from '../lib/motion';
 // SVG renderer: crisp at any pixel ratio, cheap at these sizes (≤ 500 marks) and it also
 // works in jsdom, where canvas is not implemented.
 registerECharts([BarChart, HeatmapChart, LineChart, ScatterChart,
-  GridComponent, MarkAreaComponent, TooltipComponent, SVGRenderer]);
+  GridComponent, MarkAreaComponent, TooltipComponent, VisualMapComponent, SVGRenderer]);
 
 export interface ChartSize {
   width: number;

@@ -16,6 +16,13 @@ class ThemeTests(unittest.TestCase):
          "social"),
         ("sur l'article 19 du projet de loi, adopté par l'Assemblée nationale après engagement de la procédure "
          "accélérée, portant réforme des retraites", "social"),
+        # Health texts are Santé; health insurance (« complémentaire santé ») and autonomy stay social.
+        ("sur l'ensemble du projet de loi relatif à l'organisation et à la transformation du système de santé",
+         "sante"),
+        ("sur l'ensemble de la proposition de loi visant à améliorer l'accès aux soins par la territorialisation",
+         "sante"),
+        ("sur l'ensemble de la proposition de loi relative à la complémentaire santé des salariés", "social"),
+        ("sur l'ensemble du projet de loi relatif à l'adaptation de la société au vieillissement", "social"),
         # Group names before the text (« groupe écologiste ») are ignored.
         ("sur le sous-amendement n° 4745, présenté par Mme Mélanie Vogel et les membres du groupe Écologiste - "
          "Solidarité et Territoires, à l'amendement n° 1968 rectifié quater, à l'article 7 du projet de loi "

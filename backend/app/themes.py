@@ -31,7 +31,8 @@ import unicodedata
 # (id, French label). Order = display order; "autres" last.
 THEMES = (
     ("budget", "Budget & fiscalité"),
-    ("social", "Sécurité sociale & santé"),
+    ("social", "Retraites & protection sociale"),
+    ("sante", "Santé"),
     ("travail", "Travail & emploi"),
     ("economie", "Économie & entreprises"),
     ("transports", "Transports & numérique"),
@@ -74,15 +75,19 @@ THEME_RULES = (
     ("agriculture", r"agrivoltaisme|pastoralisme|phytopharmaceutiques|pesticides|neonicotinoides|betteraves|genetiquement modifies"),
     ("immigration", r"immigration|\basile\b|\betrangers?\b|\bnationalite\b|\bsejour\b|irreguliere?"
                     r"|integration reussie|\bmigra|protection temporaire|ressortissants"),
-    ("social", r"\bsante\b|sanitaire|\bhopita|hospitali|\bsoins\b|medic|\bpatients?\b|bioethique"
-               r"|fin de vie|aide a mourir|palliatif|\bretraites?\b|vieillissement|\bautonomie\b"
-               r"|handicap|\bmaladies?\b|\bmalades\b|infirmi|pharmac|psychiatri|interruption volontaire"
-               r"|\bivg\b|complementaire sante|mutuelles|allocations? familiales|prestations sociales"
-               r"|protection sociale|aidants|\bfraudes? sociales?|biologie medicale|produits de sante"
-               r"|grossesse|\bdependance\b|ehpad|\bdeserts? medicaux|\bvaccin|covid|pandemie|epidemi"
-               r"|tabac|alcool|addiction|drogue|cannabis|\bsoignants?\b|\bmedecins?\b|chlordecone"
-               r"|avortement|mourir dans la dignite|cancers?\b|vieillir|arret cardiaque|gestes qui sauvent|chirurgi|perturbateurs endocriniens"
+    # Pensions, autonomy, disability, benefits and health insurance (social security financing
+    # laws are matched above). Checked before Santé so « complémentaire santé » stays here.
+    ("social", r"\bretraites?\b|vieillissement|vieillir|\bautonomie\b|\bdependance\b|ehpad|handicap"
+               r"|complementaire sante|mutuelles|allocations? familiales|prestations sociales"
+               r"|protection sociale|aidants|\bfraudes? sociales?"
                r"|assistant familial|revenu de solidarite|politiques d\'insertion|revenu de base|\bminima sociaux|\brsa\b"),
+    # Health care, medicine and public health.
+    ("sante", r"\bsante\b|sanitaire|\bhopita|hospitali|\bsoins\b|medic|\bpatients?\b|bioethique"
+              r"|fin de vie|aide a mourir|palliatif|\bmaladies?\b|\bmalades\b|infirmi|pharmac|psychiatri"
+              r"|interruption volontaire|\bivg\b|biologie medicale|produits de sante"
+              r"|grossesse|\bdeserts? medicaux|\bvaccin|covid|pandemie|epidemi"
+              r"|tabac|alcool|addiction|drogue|cannabis|\bsoignants?\b|\bmedecins?\b|chlordecone"
+              r"|avortement|mourir dans la dignite|cancers?\b|arret cardiaque|gestes qui sauvent|chirurgi|perturbateurs endocriniens"),
     ("budget", r"finances publiques|\bfiscal|\bimpots?\b|\bimposition\b|\btaxes?\b|\btaxation\b"
                r"|\bdette\b|\bbudget|bouclier fiscal|\btva\b|contribution exceptionnelle|\bisf\b"),
     ("travail", r"\btravail\b|\bemploi\b|\bchomage\b|\bchomeurs\b|\bsalaries?\b|\bsalaires?\b|licenciement"

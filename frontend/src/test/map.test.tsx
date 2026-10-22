@@ -161,13 +161,11 @@ describe('grouping senators by department', () => {
 });
 
 describe('MapView', () => {
-  it('stripes a tied department with the colours of the tied groups', () => {
+  it('fills a tied department with the neutral tie colour', () => {
     const senators = [makeSenator(1, '33', 'LR'), makeSenator(2, '33', 'SER'), makeSenator(3, '40', 'SER')];
     const { container } = render(<MapView senators={senators} stats={null} onOpenSenator={() => {}} />);
-    const fill = container.querySelector('.map-svg--metro path[data-code="33"]')!.getAttribute('fill')!;
-    const id = fill.match(/^url\(#(.+)\)$/)![1];
-    const pattern = container.querySelector(`pattern[id="${id}"]`)!;
-    expect([...pattern.querySelectorAll('rect')].map(r => r.getAttribute('fill'))).toEqual(['#6092dc', '#fb6f99']);
+    expect(container.querySelector('.map-svg--metro path[data-code="33"]')!.getAttribute('fill')).toBe('var(--map-tie)');
+    expect(container.querySelector('pattern')).toBeNull();
     expect(container.querySelector('.map-svg--metro path[data-code="40"]')!.getAttribute('fill')).toBe('#fb6f99');
     expect(container.querySelector('.map-svg--metro path[data-code="01"]')!.getAttribute('fill')).toBe('var(--map-empty)');
   });

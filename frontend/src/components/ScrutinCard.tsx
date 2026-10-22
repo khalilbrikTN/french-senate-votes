@@ -1,6 +1,7 @@
 import { formatDate } from '../lib/format';
 import { voteShares } from '../lib/scrutins';
 import type { Scrutin } from '../types';
+import '../themes.css';
 
 interface ScrutinCardProps {
   scrutin: Scrutin;
@@ -57,7 +58,12 @@ export default function ScrutinCard({ scrutin, index, onOpen }: ScrutinCardProps
       </div>
 
       <div className="card-footer">
-        <span className="card-tag">Session {scrutin.session || '—'}</span>
+        <span className="card-tags">
+          <span className="card-tag">Session {scrutin.session || '—'}</span>
+          {scrutin.themeLabel && (
+            <span className="card-tag card-tag--theme" title="Thème attribué automatiquement d’après l’intitulé">{scrutin.themeLabel}</span>
+          )}
+        </span>
         <span className="card-arrow" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <polyline points="9 18 15 12 9 6" />

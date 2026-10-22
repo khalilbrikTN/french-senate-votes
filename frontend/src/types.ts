@@ -58,6 +58,11 @@ export interface Scrutin {
   abstention: number;
   total: number;
   groups: GroupVoteTotal[];
+  // Automatic, approximate classification of the title (backend/app/themes.py).
+  theme?: string;
+  themeLabel?: string;
+  voteType?: string; // ensemble | article | amendement | motion | autre
+  voteTypeLabel?: string;
 }
 
 export interface StatsGroup {
@@ -268,4 +273,39 @@ export interface SenatorRebels {
   total: number; // rebel votes in total (items holds at most `limit`, latest first)
   limit: number;
   items: RebelVote[];
+}
+
+// /api/stats/themes: votes per theme (automatic classification from titles) and group
+// majority positions per theme, from the individual votes of the sitting senators.
+export interface ThemeDefinition {
+  id: string;
+  label: string;
+}
+
+export interface ThemeVotes {
+  session: string;
+  theme: string;
+  votes: number;
+  adopted: number;
+}
+
+export interface ThemeGroupPositions {
+  session: string;
+  theme: string;
+  group: string; // app code
+  votes: number; // votes where the group had at least minGroupVoters expressed positions
+  pour: number; // ... and a strict majority pour
+  contre: number;
+  abstention: number;
+}
+
+export interface ThemeStats {
+  scope: 'sitting_senators';
+  minGroupVoters: number;
+  note: string;
+  themes: ThemeDefinition[];
+  sessions: GroupStatsSession[];
+  votes: ThemeVotes[];
+  groups: ThemeGroupPositions[];
+  generatedAt: string;
 }
