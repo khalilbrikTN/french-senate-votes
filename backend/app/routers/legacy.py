@@ -38,7 +38,7 @@ def iso(value):
 @router.get("/status")
 def status():
     online = database_is_reachable()
-    return {"status": "online", "backend": "Sénat Votes API (FastAPI + Supabase)",
+    return {"status": "online", "backend": "Regard Sénat API (FastAPI + Supabase)",
             "database": "ok" if online else "unavailable", "hasData": online}
 
 

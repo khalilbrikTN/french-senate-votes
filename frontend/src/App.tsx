@@ -279,7 +279,7 @@ function App() {
               </svg>
             </div>
             <div className="logo-text">
-              <span className="logo-title">Sénat Votes</span>
+              <span className="logo-title">Regard Sénat</span>
               <span className="logo-sub">Scrutins du Sénat Français</span>
             </div>
           </a>
@@ -446,7 +446,7 @@ function App() {
       ) : view === 'about' ? null : (
         <main className="main-content view-panel react-shell-main">
           <div className="container react-shell-content">
-            <p className="section-eyebrow">Sénat Votes · Application React</p>
+            <p className="section-eyebrow">Regard Sénat</p>
             <h1 className="react-shell-title">{currentView.label}</h1>
 
             {loadState.kind === 'loading' && (
@@ -495,7 +495,7 @@ function App() {
       <footer className="site-footer">
         <div className="container footer-inner">
           <div className="footer-left">
-            <div className="logo-text"><span className="logo-title">Sénat Votes</span></div>
+            <div className="logo-text"><span className="logo-title">Regard Sénat</span></div>
             <p className="footer-desc">Données issues du portail officiel <a href="https://www.senat.fr" target="_blank" rel="noopener noreferrer">senat.fr</a> — Licence Ouverte Etalab v2.0</p>
             <nav className="footer-links footer-source-links" aria-label="Sources des données">
               <a href="https://www.senat.fr/scrutin-public/scr2026.html" target="_blank" rel="noopener noreferrer">Source officielle des scrutins</a>
@@ -535,7 +535,7 @@ function App() {
             </div>
           </section>
         </div>
-        <div className="footer-bottom"><div className="container"><p>Sénat Votes · Transparence et suivi de l’activité parlementaire</p></div></div>
+        <div className="footer-bottom"><div className="container"><p>Regard Sénat · Projet indépendant, non affilié au Sénat · Transparence et suivi de l’activité parlementaire</p></div></div>
       </footer>
 
       {/* Keyed boundaries: opening another scrutin/senator remounts the dialog and clears a caught error. */}

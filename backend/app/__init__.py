@@ -1,1 +1,1 @@
-"""Sénat Votes API: read-only access to the Supabase database."""
+"""Regard Sénat API: read-only access to the Supabase database."""

@@ -1,4 +1,4 @@
-# Sénat Votes API
+# Regard Sénat API
 
 A read-only FastAPI service over the Supabase database described by
 `supabase/migrations/`. It never writes: every pooled session runs

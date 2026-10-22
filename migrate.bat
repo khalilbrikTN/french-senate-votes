@@ -1,5 +1,5 @@
 @echo off
-title Senat Votes - Migrations du schema
+title Regard Senat - Migrations du schema
 chcp 65001 > nul
 cd /d "%~dp0"
 

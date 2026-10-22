@@ -1,6 +1,6 @@
 # Deployment
 
-Where each part of Sénat Votes lives in production, and how to rebuild or update it.
+Where each part of Regard Sénat lives in production, and how to rebuild or update it.
 
 | Part | Host | Source in this repo | URL |
 |---|---|---|---|
